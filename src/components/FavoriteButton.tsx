@@ -4,7 +4,7 @@ import { cn } from '../utils/cn';
 
 interface FavoriteButtonProps {
   isFavorite: boolean;
-  onClick: () => void;
+  onClick: (e?: React.MouseEvent) => void;
   className?: string;
   showLabel?: boolean;
 }

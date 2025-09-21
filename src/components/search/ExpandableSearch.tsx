@@ -1,12 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
-import { Mic } from 'lucide-react';
-import SearchButton from './SearchButton';
+import { AnimatePresence } from 'framer-motion';
 import SearchInput from './SearchInput';
 import SearchSuggestions from './SearchSuggestions';
 import { useClickOutside } from '../../hooks/useClickOutside';
 import { useSearchSuggestions } from '../../hooks/useSearchSuggestions';
-import { useVoiceRecognition } from '../../hooks/useVoiceRecognition';
 import { cn } from '../../utils/cn';
 
 interface ExpandableSearchProps {
@@ -20,14 +17,12 @@ export default function ExpandableSearch({
   className,
   placeholder = 'Search...'
 }: ExpandableSearchProps) {
-  const [expanded, setExpanded] = useState(false);
   const [query, setQuery] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   
   const suggestions = useSearchSuggestions(query);
-  const { isListening, startListening, stopListening, transcript } = useVoiceRecognition();
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [trendingSearches] = useState([
     'News',
@@ -44,25 +39,10 @@ export default function ExpandableSearch({
     }
   }, []);
 
-  useEffect(() => {
-    if (transcript) {
-      setQuery(transcript);
-      handleSearch(transcript);
-    }
-  }, [transcript]);
 
   useClickOutside(containerRef, () => {
-    if (expanded && !query) {
-      setExpanded(false);
-    }
     setShowSuggestions(false);
   });
-
-  useEffect(() => {
-    if (expanded) {
-      inputRef.current?.focus();
-    }
-  }, [expanded]);
 
   const handleSearch = (searchQuery: string) => {
     if (!searchQuery.trim()) return;
@@ -90,13 +70,6 @@ export default function ExpandableSearch({
     inputRef.current?.focus();
   };
 
-  const handleVoiceSearch = () => {
-    if (isListening) {
-      stopListening();
-    } else {
-      startListening();
-    }
-  };
 
   const handleSuggestionSelect = (term: string) => {
     setQuery(term);
@@ -111,70 +84,24 @@ export default function ExpandableSearch({
   return (
     <div ref={containerRef} className={cn('relative', className)}>
       <form onSubmit={handleSubmit} className="flex items-center gap-2">
-        <AnimatePresence mode="wait">
-          {expanded ? (
-            <motion.div
-              initial={{ width: 44, opacity: 0 }}
-              animate={{ width: '100%', opacity: 1 }}
-              exit={{ width: 44, opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="flex-1"
-            >
-              <div className="relative">
-                <SearchInput
-                  ref={inputRef}
-                  value={query}
-                  onChange={(e) => {
-                    setQuery(e.target.value);
-                    setShowSuggestions(true);
-                  }}
-                  onFocus={() => setShowSuggestions(true)}
-                  onClear={handleClear}
-                  placeholder={placeholder}
-                  expanded={expanded}
-                />
-                <motion.button
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={handleVoiceSearch}
-                  type="button"
-                  className={cn(
-                    "absolute right-12 top-1/2 -translate-y-1/2",
-                    "p-1.5 rounded-full transition-colors",
-                    isListening
-                      ? "bg-red-500 text-white"
-                      : "text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                  )}
-                  aria-label={isListening ? "Stop voice search" : "Start voice search"}
-                >
-                  <Mic className="w-4 h-4" />
-                </motion.button>
-              </div>
-            </motion.div>
-          ) : (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-            >
-              <SearchButton 
-                onClick={() => setExpanded(true)} 
-                label="Expand search"
-              />
-            </motion.div>
-          )}
-        </AnimatePresence>
-        
-        {expanded && query && (
-          <SearchButton 
-            onClick={handleSubmit}
-            className="shrink-0"
+        <div className="relative flex-1">
+          <SearchInput
+            ref={inputRef}
+            value={query}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setShowSuggestions(true);
+            }}
+            onFocus={() => setShowSuggestions(true)}
+            onClear={handleClear}
+            placeholder={placeholder}
+            expanded={true}
           />
-        )}
+        </div>
       </form>
 
       <AnimatePresence>
-        {expanded && showSuggestions && (
+        {showSuggestions && (
           <SearchSuggestions
             isVisible={showSuggestions}
             recentSearches={recentSearches}

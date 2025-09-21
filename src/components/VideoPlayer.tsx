@@ -2,6 +2,7 @@ import { memo, useEffect, useRef, useState } from 'react';
 import Hls from 'hls.js';
 import ReactPlayer from 'react-player/lazy';
 import { isYouTubeUrl } from '../utils/streamUtils';
+import useStore from '../store/useStore';
 
 interface VideoPlayerProps {
   src: string;
@@ -11,6 +12,7 @@ interface VideoPlayerProps {
 function VideoPlayer({ src, poster }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const { settings } = useStore();
 
   useEffect(() => {
     if (!videoRef.current || isYouTubeUrl(src)) return;
@@ -45,6 +47,15 @@ function VideoPlayer({ src, poster }: VideoPlayerProps) {
     };
   }, [src]);
 
+  // Apply player settings to video element
+  useEffect(() => {
+    if (!videoRef.current || isYouTubeUrl(src)) return;
+
+    const video = videoRef.current;
+    video.volume = settings.player?.volume ?? 0.8;
+    video.muted = settings.player?.muted ?? false;
+  }, [settings.player?.volume, settings.player?.muted, src]);
+
   if (isYouTubeUrl(src)) {
     return (
       <div className="aspect-video bg-black rounded-lg overflow-hidden">
@@ -53,10 +64,13 @@ function VideoPlayer({ src, poster }: VideoPlayerProps) {
           width="100%"
           height="100%"
           controls
-          playing
+          playing={settings.player?.autoplay ?? false}
+          volume={settings.player?.volume ?? 0.8}
+          muted={settings.player?.muted ?? false}
+          loop={settings.player?.loop ?? false}
           config={{
             youtube: {
-              playerVars: { 
+              playerVars: {
                 showinfo: 1,
                 modestbranding: 1,
                 rel: 0
@@ -83,6 +97,9 @@ function VideoPlayer({ src, poster }: VideoPlayerProps) {
         controls
         poster={poster}
         playsInline
+        autoPlay={settings.player?.autoplay ?? false}
+        muted={settings.player?.muted ?? false}
+        loop={settings.player?.loop ?? false}
       />
     </>
   );

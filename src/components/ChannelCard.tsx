@@ -15,17 +15,17 @@ function ChannelCard({ channel, onClick }: ChannelCardProps) {
   const isFavorite = settings.favorites.includes(channel.id);
 
   return (
-    <motion.div 
+    <motion.div
       layout
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      whileHover={{ y: -4 }}
-      className="group relative bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden 
-        hover:shadow-md transition-all duration-300"
+      whileHover={{ y: -6, scale: 1.02 }}
+      className="group relative bg-card rounded-2xl shadow-lg overflow-hidden
+        hover:shadow-xl transition-all duration-300 border border-border card-hover"
       onClick={onClick}
     >
-      <div className="aspect-video bg-gray-100 dark:bg-gray-900 relative">
+      <div className="aspect-video bg-muted relative">
         <img
           src={channel.logo}
           alt={channel.name}
@@ -41,31 +41,29 @@ function ChannelCard({ channel, onClick }: ChannelCardProps) {
         />
         <FavoriteButton
           isFavorite={isFavorite}
-          onClick={(e) => {
-            e.stopPropagation();
+          onClick={(e?: React.MouseEvent) => {
+            e?.stopPropagation();
             toggleFavorite(channel.id);
           }}
           className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
         />
       </div>
 
-      <div className="p-4">
-        <h3 className="font-semibold text-gray-900 dark:text-white truncate">
+      <div className="p-4 pb-6">
+        <h3 className="font-semibold text-card-foreground truncate mb-3">
           {channel.name}
         </h3>
-        <div className="mt-2 flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2">
           {channel.categories.slice(0, 2).map(category => (
-            <span 
+            <span
               key={category}
-              className="text-xs px-2 py-1 bg-gray-100 dark:bg-gray-700 
-                text-gray-600 dark:text-gray-300 rounded-full"
+              className="text-xs px-3 py-1.5 bg-primary/10 text-primary rounded-full font-medium"
             >
               {category}
             </span>
           ))}
           {channel.categories.length > 2 && (
-            <span className="text-xs px-2 py-1 bg-gray-100 dark:bg-gray-700 
-              text-gray-600 dark:text-gray-300 rounded-full"
+            <span className="text-xs px-3 py-1.5 bg-muted text-muted-foreground rounded-full font-medium"
             >
               +{channel.categories.length - 2}
             </span>

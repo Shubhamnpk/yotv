@@ -19,7 +19,7 @@ export default function FilterBar({
   onLanguageChange,
 }: FilterBarProps) {
   return (
-    <div className="flex flex-col gap-4 p-4 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+    <div className="flex flex-col gap-4 p-4 bg-card border-b border-border">
       <div className="flex items-center gap-2">
         <FilterIcon className="w-5 h-5" />
         <h2 className="font-semibold">Filters</h2>
@@ -33,10 +33,10 @@ export default function FilterBar({
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => onCategoryChange(null)}
-              className={`px-3 py-1 rounded-full text-sm ${
+              className={`px-3 py-1 rounded-full text-sm transition-colors ${
                 selectedCategory === null
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-muted hover:bg-accent text-muted-foreground hover:text-accent-foreground'
               }`}
             >
               All
@@ -47,10 +47,10 @@ export default function FilterBar({
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => onCategoryChange(category.id)}
-                className={`px-3 py-1 rounded-full text-sm ${
+                className={`px-3 py-1 rounded-full text-sm transition-colors ${
                   selectedCategory === category.id
-                    ? 'bg-blue-500 text-white'
-                    : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-muted hover:bg-accent text-muted-foreground hover:text-accent-foreground'
                 }`}
               >
                 {category.name}
@@ -66,10 +66,10 @@ export default function FilterBar({
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => onLanguageChange(null)}
-              className={`px-3 py-1 rounded-full text-sm ${
+              className={`px-3 py-1 rounded-full text-sm transition-colors ${
                 selectedLanguage === null
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-muted hover:bg-accent text-muted-foreground hover:text-accent-foreground'
               }`}
             >
               All
@@ -80,10 +80,10 @@ export default function FilterBar({
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => onLanguageChange(language.code)}
-                className={`px-3 py-1 rounded-full text-sm ${
+                className={`px-3 py-1 rounded-full text-sm transition-colors ${
                   selectedLanguage === language.code
-                    ? 'bg-blue-500 text-white'
-                    : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-muted hover:bg-accent text-muted-foreground hover:text-accent-foreground'
                 }`}
               >
                 {language.name}

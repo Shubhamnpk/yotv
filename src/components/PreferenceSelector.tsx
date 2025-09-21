@@ -9,6 +9,15 @@ interface PreferenceSelectorProps {
   categories: { id: string; name: string }[];
 }
 
+interface Section {
+  title: string;
+  items: any[];
+  selected: string[];
+  idKey: string;
+  nameKey: string;
+  updateKey: string;
+}
+
 export default function PreferenceSelector({
   languages,
   countries,
@@ -45,37 +54,37 @@ export default function PreferenceSelector({
     }
   ], [languages, countries, categories, settings]);
 
-  const handleToggleAll = useCallback((section, select) => {
-    const ids = select ? section.items.map(item => item[section.idKey]) : [];
+  const handleToggleAll = useCallback((section: Section, select: boolean) => {
+    const ids = select ? section.items.map((item: any) => item[section.idKey]) : [];
     updateSettings({ [section.updateKey]: ids });
   }, [updateSettings]);
 
-  const handleToggleItem = useCallback((section, itemId) => {
+  const handleToggleItem = useCallback((section: Section, itemId: string) => {
     const newSelection = section.selected.includes(itemId)
-      ? section.selected.filter(id => id !== itemId)
+      ? section.selected.filter((id: string) => id !== itemId)
       : [...section.selected, itemId];
     updateSettings({ [section.updateKey]: newSelection });
   }, [updateSettings]);
 
-  const handleShowMore = (sectionTitle) => {
+  const handleShowMore = (sectionTitle: string) => {
     setShowMore(prev => ({ ...prev, [sectionTitle]: !prev[sectionTitle] }));
   };
 
-  const filteredItems = (items, nameKey) => {
-    return items.filter(item => item[nameKey].toLowerCase().includes(searchQuery));
+  const filteredItems = (items: any[], nameKey: string) => {
+    return items.filter((item: any) => item[nameKey].toLowerCase().includes(searchQuery));
   };
 
   return (
     <div className="space-y-8">
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={20} />
         <input
           type="text"
           placeholder="Search preferences..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value.toLowerCase())}
-          className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg
-            bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full pl-10 pr-4 py-2 border border-input rounded-lg
+            bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
         />
       </div>
 
@@ -91,13 +100,13 @@ export default function PreferenceSelector({
               <div className="flex gap-2">
                 <button
                   onClick={() => handleToggleAll(section, true)}
-                  className="text-sm text-blue-500 hover:text-blue-600"
+                  className="text-sm text-primary hover:text-primary/80"
                 >
                   Select All
                 </button>
                 <button
                   onClick={() => handleToggleAll(section, false)}
-                  className="text-sm text-blue-500 hover:text-blue-600"
+                  className="text-sm text-primary hover:text-primary/80"
                 >
                   Clear
                 </button>
@@ -107,22 +116,22 @@ export default function PreferenceSelector({
             {showMore[section.title] && (
               <button
                 onClick={() => handleShowMore(section.title)}
-                className="text-sm text-blue-500 hover:text-blue-600"
+                className="text-sm text-primary hover:text-primary/80"
               >
                 Show Less
               </button>
             )}
 
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-              {itemsToShow.map(item => (
+              {itemsToShow.map((item: any) => (
                 <button
                   key={item[section.idKey]}
                   onClick={() => handleToggleItem(section, item[section.idKey])}
                   className={cn(
                     'flex items-center gap-2 p-2 rounded-lg text-left transition-colors',
                     section.selected.includes(item[section.idKey])
-                      ? 'bg-blue-500 text-white'
-                      : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600'
+                      ? 'bg-primary text-primary-foreground'
+                      : 'bg-muted hover:bg-accent text-muted-foreground hover:text-accent-foreground'
                   )}
                 >
                   {section.selected.includes(item[section.idKey]) ? (

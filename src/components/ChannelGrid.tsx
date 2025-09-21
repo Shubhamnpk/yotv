@@ -8,10 +8,12 @@ import useStore from '../store/useStore';
 
 interface ChannelGridProps {
   channels: Channel[];
+  categories: { id: string; name: string }[];
+  selectedCategory: string | null;
   onChannelSelect: (channel: Channel) => void;
 }
 
-export default function ChannelGrid({ channels, onChannelSelect }: ChannelGridProps) {
+export default function ChannelGrid({ channels, categories, selectedCategory, onChannelSelect }: ChannelGridProps) {
   const { settings } = useStore();
   const { ref, inView } = useInView({
     threshold: 0.1,
@@ -56,7 +58,12 @@ export default function ChannelGrid({ channels, onChannelSelect }: ChannelGridPr
 
           <section className="space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold">All Channels</h2>
+              <h2 className="text-xl font-semibold">
+                {selectedCategory
+                  ? categories.find(cat => cat.id === selectedCategory)?.name || 'All Channels'
+                  : 'All Channels'
+                }
+              </h2>
               <span className="px-3 py-1 text-sm bg-gray-100 dark:bg-gray-800 rounded-full">
                 {nonFavoriteChannels.length}
               </span>
@@ -88,7 +95,13 @@ export default function ChannelGrid({ channels, onChannelSelect }: ChannelGridPr
                         height: `${virtualRow.size}px`,
                         transform: `translateY(${virtualRow.start}px)`,
                       }}
-                      className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+                      className={`grid gap-6 p-4 ${
+                        settings.ui?.gridSize === 'small'
+                          ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5'
+                          : settings.ui?.gridSize === 'large'
+                          ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
+                          : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
+                      }`}
                     >
                       {channelSlice.map((channel) => (
                         <ChannelCard

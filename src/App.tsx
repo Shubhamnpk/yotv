@@ -16,6 +16,7 @@ import { Header } from './components/layout/Header';
 import { PlayerSection } from './components/player/PlayerSection';
 import { ChannelSection } from './components/channels/ChannelSection';
 import useStore from './store/useStore';
+import { applyTheme } from './utils/themeUtils';
 import youtubeSourcesData from './data/youtube-sources.json';
 
 function App() {
@@ -35,8 +36,7 @@ function App() {
   const { settings } = useStore();
 
   useEffect(() => {
-    document.documentElement.classList.remove('light', 'dark');
-    document.documentElement.classList.add(settings.theme);
+    applyTheme(settings.theme);
   }, [settings.theme]);
 
   useEffect(() => {
@@ -73,7 +73,7 @@ function App() {
 
         setChannels([...channelsData, ...youtubeChannels]);
         setStreams([
-          ...streamsData.filter((stream) => isValidStreamUrl(stream.url)),
+          ...streamsData.filter((stream: Stream) => isValidStreamUrl(stream.url)),
           ...youtubeStreams,
         ]);
         setCategories(categoriesData);
@@ -132,12 +132,11 @@ function App() {
 
   return (
     <ErrorBoundary>
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white">
+      <div className="min-h-screen bg-background text-foreground">
         <Header
           onMobileMenuOpen={() => setIsMobileMenuOpen(true)}
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          onSearchFocus={() => setIsSearchOpen(true)}
+          onSearch={setSearchQuery}
+          onMobileSearchOpen={() => setIsSearchOpen(true)}
           languages={languages}
           categories={categories}
         />
@@ -160,30 +159,58 @@ function App() {
           onSearchChange={setSearchQuery}
         />
 
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <AnimatePresence mode="wait">
-            {selectedChannel && selectedStream ? (
-              <PlayerSection
-                channel={selectedChannel}
-                stream={selectedStream}
-                onBack={() => {
-                  setSelectedChannel(null);
-                  setSelectedStream(null);
-                }}
-              />
-            ) : (
-              <ChannelSection
-                channels={filteredChannels}
-                categories={categories}
-                languages={languages}
-                selectedCategory={selectedCategory}
-                selectedLanguage={selectedLanguage}
-                onCategoryChange={setSelectedCategory}
-                onLanguageChange={setSelectedLanguage}
-                onChannelSelect={handleChannelSelect}
-              />
-            )}
-          </AnimatePresence>
+        <main className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 ${
+          settings.ui?.compactMode ? 'py-3' : 'py-6'
+        }`}>
+          {settings.ui?.animations ?? true ? (
+            <AnimatePresence mode="wait">
+              {selectedChannel && selectedStream ? (
+                <PlayerSection
+                  channel={selectedChannel}
+                  stream={selectedStream}
+                  onBack={() => {
+                    setSelectedChannel(null);
+                    setSelectedStream(null);
+                  }}
+                />
+              ) : (
+                <ChannelSection
+                  channels={filteredChannels}
+                  categories={categories}
+                  languages={languages}
+                  selectedCategory={selectedCategory}
+                  selectedLanguage={selectedLanguage}
+                  onCategoryChange={setSelectedCategory}
+                  onLanguageChange={setSelectedLanguage}
+                  onChannelSelect={handleChannelSelect}
+                />
+              )}
+            </AnimatePresence>
+          ) : (
+            <>
+              {selectedChannel && selectedStream ? (
+                <PlayerSection
+                  channel={selectedChannel}
+                  stream={selectedStream}
+                  onBack={() => {
+                    setSelectedChannel(null);
+                    setSelectedStream(null);
+                  }}
+                />
+              ) : (
+                <ChannelSection
+                  channels={filteredChannels}
+                  categories={categories}
+                  languages={languages}
+                  selectedCategory={selectedCategory}
+                  selectedLanguage={selectedLanguage}
+                  onCategoryChange={setSelectedCategory}
+                  onLanguageChange={setSelectedLanguage}
+                  onChannelSelect={handleChannelSelect}
+                />
+              )}
+            </>
+          )}
         </main>
       </div>
     </ErrorBoundary>

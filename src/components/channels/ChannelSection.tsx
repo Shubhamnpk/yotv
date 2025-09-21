@@ -36,11 +36,14 @@ export function ChannelSection({
         categories={categories}
         languages={languages}
         countries={[]}
+        selectedCategory={selectedCategory}
         onCategoryChange={onCategoryChange}
         onLanguageChange={onLanguageChange}
       />
       <ChannelGrid
         channels={channels}
+        categories={categories}
+        selectedCategory={selectedCategory}
         onChannelSelect={onChannelSelect}
       />
     </motion.div>
