@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback } from 'react';
-import { Search, Check } from 'lucide-react';
+import { Search, Check, Globe, MapPin, Tag, ChevronDown, ChevronUp, X } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import useStore from '../store/useStore';
 import { cn } from '../utils/cn';
 
@@ -16,7 +17,39 @@ interface Section {
   idKey: string;
   nameKey: string;
   updateKey: string;
+  icon: React.ComponentType<{ className?: string }>;
 }
+
+// Highlight text component
+const HighlightText = ({ text, highlight }: { text: string; highlight: string }) => {
+  if (!highlight.trim()) return <span>{text}</span>;
+
+  const regex = new RegExp(`(${highlight.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+  const parts = text.split(regex);
+
+  return (
+    <span>
+      {parts.map((part, index) =>
+        regex.test(part) ? (
+          <mark key={index} className="bg-yellow-200 dark:bg-yellow-600 px-0.5 rounded">
+            {part}
+          </mark>
+        ) : (
+          part
+        )
+      )}
+    </span>
+  );
+};
+
+// Get flag emoji for country code
+const getCountryFlag = (code: string) => {
+  const codePoints = code
+    .toUpperCase()
+    .split('')
+    .map(char => 127397 + char.charCodeAt(0));
+  return String.fromCodePoint(...codePoints);
+};
 
 export default function PreferenceSelector({
   languages,
@@ -34,7 +67,8 @@ export default function PreferenceSelector({
       selected: settings.preferredLanguages,
       idKey: 'code',
       nameKey: 'name',
-      updateKey: 'preferredLanguages'
+      updateKey: 'preferredLanguages',
+      icon: Globe
     },
     {
       title: 'Countries',
@@ -42,7 +76,8 @@ export default function PreferenceSelector({
       selected: settings.preferredCountries,
       idKey: 'code',
       nameKey: 'name',
-      updateKey: 'preferredCountries'
+      updateKey: 'preferredCountries',
+      icon: MapPin
     },
     {
       title: 'Categories',
@@ -50,7 +85,8 @@ export default function PreferenceSelector({
       selected: settings.preferredCategories,
       idKey: 'id',
       nameKey: 'name',
-      updateKey: 'preferredCategories'
+      updateKey: 'preferredCategories',
+      icon: Tag
     }
   ], [languages, countries, categories, settings]);
 
@@ -83,76 +119,125 @@ export default function PreferenceSelector({
           placeholder="Search preferences..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value.toLowerCase())}
-          className="w-full pl-10 pr-4 py-2 border border-input rounded-lg
-            bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+          className="w-full pl-10 pr-10 py-3 border border-input rounded-lg
+            bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-colors"
+          aria-label="Search preferences"
         />
+        {searchQuery && (
+          <button
+            onClick={() => setSearchQuery('')}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <X size={16} />
+          </button>
+        )}
       </div>
 
       {sections.map(section => {
-        const itemsToShow = showMore[section.title]
-          ? filteredItems(section.items, section.nameKey)
-          : filteredItems(section.items, section.nameKey).slice(0, 5);
+        const filtered = filteredItems(section.items, section.nameKey);
+        const isExpanded = showMore[section.title];
+        const displayItems = isExpanded ? filtered : filtered.slice(0, 5);
 
         return (
-          <div key={section.title} className="space-y-4">
+          <motion.div
+            key={section.title}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+            className="space-y-4"
+          >
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold">{section.title}</h3>
+              <div className="flex items-center gap-2">
+                <section.icon className="w-5 h-5 text-primary" />
+                <h3 className="text-lg font-semibold">{section.title}</h3>
+                <span className="text-sm text-muted-foreground">
+                  ({section.selected.length}/{section.items.length})
+                </span>
+              </div>
               <div className="flex gap-2">
                 <button
                   onClick={() => handleToggleAll(section, true)}
-                  className="text-sm text-primary hover:text-primary/80"
+                  className="text-sm text-primary hover:text-primary/80 transition-colors"
+                  aria-label={`Select all ${section.title.toLowerCase()}`}
                 >
                   Select All
                 </button>
                 <button
                   onClick={() => handleToggleAll(section, false)}
-                  className="text-sm text-primary hover:text-primary/80"
+                  className="text-sm text-primary hover:text-primary/80 transition-colors"
+                  aria-label={`Clear all ${section.title.toLowerCase()}`}
                 >
                   Clear
                 </button>
               </div>
             </div>
 
-            {showMore[section.title] && (
-              <button
-                onClick={() => handleShowMore(section.title)}
-                className="text-sm text-primary hover:text-primary/80"
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={isExpanded ? 'expanded' : 'collapsed'}
+                initial={{ height: 'auto', opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.3 }}
+                className="overflow-hidden"
               >
-                Show Less
-              </button>
-            )}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {displayItems.map((item: any) => (
+                    <motion.button
+                      key={item[section.idKey]}
+                      onClick={() => handleToggleItem(section, item[section.idKey])}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      className={cn(
+                        'flex items-center gap-3 p-3 rounded-lg text-left transition-all duration-200 border',
+                        section.selected.includes(item[section.idKey])
+                          ? 'bg-primary text-primary-foreground border-primary shadow-md'
+                          : 'bg-card hover:bg-accent text-card-foreground hover:text-accent-foreground border-border hover:border-primary/50'
+                      )}
+                      title={`${section.title}: ${item[section.nameKey]}`}
+                      aria-label={`${section.selected.includes(item[section.idKey]) ? 'Deselect' : 'Select'} ${item[section.nameKey]} ${section.title.toLowerCase().slice(0, -1)}`}
+                    >
+                      {section.title === 'Countries' && (
+                        <span className="text-lg" role="img" aria-label={`${item[section.nameKey]} flag`}>
+                          {getCountryFlag(item[section.idKey])}
+                        </span>
+                      )}
+                      {section.selected.includes(item[section.idKey]) ? (
+                        <Check className="w-4 h-4 flex-shrink-0" />
+                      ) : (
+                        <div className="w-4 h-4 rounded-full border-2 border-current opacity-30" />
+                      )}
+                      <span className="truncate flex-1">
+                        <HighlightText text={item[section.nameKey]} highlight={searchQuery} />
+                      </span>
+                    </motion.button>
+                  ))}
+                </div>
+              </motion.div>
+            </AnimatePresence>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-              {itemsToShow.map((item: any) => (
-                <button
-                  key={item[section.idKey]}
-                  onClick={() => handleToggleItem(section, item[section.idKey])}
-                  className={cn(
-                    'flex items-center gap-2 p-2 rounded-lg text-left transition-colors',
-                    section.selected.includes(item[section.idKey])
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-muted hover:bg-accent text-muted-foreground hover:text-accent-foreground'
-                  )}
-                >
-                  {section.selected.includes(item[section.idKey]) ? (
-                    <Check className="w-4 h-4 flex-shrink-0" />
-                  ) : (
-                    <div className="w-4 h-4" />
-                  )}
-                  <span className="truncate">{item[section.nameKey]}</span>
-                </button>
-              ))}
-            </div>
-
-            {filteredItems(section.items, section.nameKey).length > 5 && (
-              <button
+            {filtered.length > 5 && (
+              <motion.button
                 onClick={() => handleShowMore(section.title)}
-                className="text-sm text-blue-500 hover:text-blue-600"
+                className="flex items-center gap-2 text-sm text-primary hover:text-primary/80 transition-colors mx-auto"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                aria-label={`${isExpanded ? 'Show less' : 'Show more'} ${section.title.toLowerCase()}`}
               >
-                {showMore[section.title] ? 'Show Less' : 'Show More'}
-              </button>
+                {isExpanded ? (
+                  <>
+                    <ChevronUp className="w-4 h-4" />
+                    Show Less
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown className="w-4 h-4" />
+                    Show More ({filtered.length - 5} more)
+                  </>
+                )}
+              </motion.button>
             )}
-          </div>
+          </motion.div>
         );
       })}
     </div>

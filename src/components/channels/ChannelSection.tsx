@@ -1,12 +1,13 @@
 import { motion } from 'framer-motion';
 import QuickFilters from '../QuickFilters';
 import ChannelGrid from '../ChannelGrid';
-import type { Channel, Category, Language } from '../../types';
+import type { Channel, Category, Language, Country } from '../../types';
 
 interface ChannelSectionProps {
   channels: Channel[];
   categories: Category[];
   languages: Language[];
+  countries: Country[];
   selectedCategory: string | null;
   selectedLanguage: string | null;
   onCategoryChange: (category: string | null) => void;
@@ -18,6 +19,7 @@ export function ChannelSection({
   channels,
   categories,
   languages,
+  countries,
   selectedCategory,
   selectedLanguage,
   onCategoryChange,
@@ -35,7 +37,7 @@ export function ChannelSection({
       <QuickFilters
         categories={categories}
         languages={languages}
-        countries={[]}
+        countries={countries}
         selectedCategory={selectedCategory}
         onCategoryChange={onCategoryChange}
         onLanguageChange={onLanguageChange}

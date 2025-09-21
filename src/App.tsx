@@ -5,8 +5,10 @@ import {
   fetchStreams,
   fetchCategories,
   fetchLanguages,
+  fetchCountries,
+  fetchLogos,
 } from './api';
-import type { Channel, Stream, Category, Language } from './types';
+import type { Channel, Stream, Category, Language, Country, Logo } from './types';
 import { isValidStreamUrl } from './utils/streamUtils';
 import LoadingScreen from './components/LoadingScreen';
 import MobileNav from './components/MobileNav';
@@ -15,6 +17,7 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { Header } from './components/layout/Header';
 import { PlayerSection } from './components/player/PlayerSection';
 import { ChannelSection } from './components/channels/ChannelSection';
+import Onboarding from './components/Onboarding';
 import useStore from './store/useStore';
 import { applyTheme } from './utils/themeUtils';
 import youtubeSourcesData from './data/youtube-sources.json';
@@ -24,6 +27,8 @@ function App() {
   const [streams, setStreams] = useState<Stream[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [languages, setLanguages] = useState<Language[]>([]);
+  const [countries, setCountries] = useState<Country[]>([]);
+  const [logos, setLogos] = useState<Logo[]>([]);
   const [selectedChannel, setSelectedChannel] = useState<Channel | null>(null);
   const [selectedStream, setSelectedStream] = useState<Stream | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -32,6 +37,7 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   const { settings } = useStore();
 
@@ -40,22 +46,42 @@ function App() {
   }, [settings.theme]);
 
   useEffect(() => {
+    if (!loading && countries.length > 0 && settings.preferredCountries.length === 0) {
+      setShowOnboarding(true);
+    }
+  }, [loading, countries, settings.preferredCountries]);
+
+  useEffect(() => {
     const abortController = new AbortController();
 
     const fetchData = async () => {
       try {
-        const [channelsData, streamsData, categoriesData, languagesData] =
+        const [channelsData, streamsData, categoriesData, languagesData, countriesData, logosData] =
           await Promise.all([
             fetchChannels(),
             fetchStreams(),
             fetchCategories(),
             fetchLanguages(),
+            fetchCountries(),
+            fetchLogos(),
           ]).catch((error) => {
             console.error('Error fetching data:', error);
-            return [[], [], [], []];
+            return [[], [], [], [], [], []];
           });
 
         if (abortController.signal.aborted) return;
+
+        const logoMap = new Map<string, string>();
+        logosData.forEach((logo: Logo) => {
+          if (!logoMap.has(logo.channel)) {
+            logoMap.set(logo.channel, logo.url);
+          }
+        });
+
+        const apiChannels = channelsData.map((channel: Channel) => ({
+          ...channel,
+          logo: logoMap.get(channel.id),
+        }));
 
         const youtubeChannels = youtubeSourcesData.sources.map((source) => ({
           id: source.id,
@@ -71,13 +97,15 @@ function App() {
           url: source.url,
         }));
 
-        setChannels([...channelsData, ...youtubeChannels]);
+        setChannels([...apiChannels, ...youtubeChannels]);
         setStreams([
           ...streamsData.filter((stream: Stream) => isValidStreamUrl(stream.url)),
           ...youtubeStreams,
         ]);
         setCategories(categoriesData);
         setLanguages(languagesData);
+        setCountries(countriesData);
+        setLogos(logosData);
       } finally {
         if (!abortController.signal.aborted) {
           setLoading(false);
@@ -104,12 +132,14 @@ function App() {
       const matchesCategory =
         !selectedCategory || channel.categories.includes(selectedCategory);
       const matchesLanguage =
-        !selectedLanguage || channel.languages.includes(selectedLanguage);
+        !selectedLanguage || (channel.languages && channel.languages.includes(selectedLanguage));
       const matchesPreferences =
-        settings.preferredCategories.length === 0 ||
+        (settings.preferredCategories.length === 0 ||
         channel.categories.some((cat) =>
           settings.preferredCategories.includes(cat)
-        );
+        )) &&
+        (settings.preferredCountries.length === 0 ||
+        settings.preferredCountries.includes(channel.country));
       return matchesSearch && matchesCategory && matchesLanguage && matchesPreferences;
     });
   }, [
@@ -118,6 +148,7 @@ function App() {
     selectedCategory,
     selectedLanguage,
     settings.preferredCategories,
+    settings.preferredCountries,
   ]);
 
   const handleChannelSelect = (channel: Channel) => {
@@ -139,6 +170,7 @@ function App() {
           onMobileSearchOpen={() => setIsSearchOpen(true)}
           languages={languages}
           categories={categories}
+          countries={countries}
         />
 
         <MobileNav
@@ -178,6 +210,7 @@ function App() {
                   channels={filteredChannels}
                   categories={categories}
                   languages={languages}
+                  countries={countries}
                   selectedCategory={selectedCategory}
                   selectedLanguage={selectedLanguage}
                   onCategoryChange={setSelectedCategory}
@@ -202,6 +235,7 @@ function App() {
                   channels={filteredChannels}
                   categories={categories}
                   languages={languages}
+                  countries={countries}
                   selectedCategory={selectedCategory}
                   selectedLanguage={selectedLanguage}
                   onCategoryChange={setSelectedCategory}
@@ -212,6 +246,12 @@ function App() {
             </>
           )}
         </main>
+
+        <Onboarding
+          countries={countries}
+          isOpen={showOnboarding}
+          onComplete={() => setShowOnboarding(false)}
+        />
       </div>
     </ErrorBoundary>
   );
