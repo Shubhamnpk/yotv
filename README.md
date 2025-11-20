@@ -180,14 +180,7 @@ This project is licensed under the **YoGuru Limited Contributor License v3** - s
 - ✅ **Attribution**: Must maintain attribution to original copyright holder
 - ❌ **Commercial Use**: Requires explicit written permission
 - ❌ **Sublicensing**: Not permitted without permission
-
-## 📞 Contact & Support
-
-**Shubham Niraula**
-- 📧 Email: [Contact via GitHub](https://github.com/Shubhamnpk)
-- 📱 Phone: +977 9842440053
-- 🌐 GitHub: [@Shubhamnpk](https://github.com/Shubhamnpk)
-
+- 
 ### Support
 - 🐛 **Bug Reports**: [Create an issue](https://github.com/Shubhamnpk/yotv/issues)
 - 💡 **Feature Requests**: [Create an issue](https://github.com/Shubhamnpk/yotv/issues)
