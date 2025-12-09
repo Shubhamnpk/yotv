@@ -1,10 +1,11 @@
 import { Menu, Search } from 'lucide-react';
-import ExpandableSearch from '../search/ExpandableSearch';
+import SimpleSearch from '../search/SimpleSearch';
 import Settings from '../Settings';
 import Logo from '../Logo';
 import type { Category, Language } from '../../types';
 
 interface HeaderProps {
+  searchQuery: string;
   onMobileMenuOpen: () => void;
   onSearch: (query: string) => void;
   onMobileSearchOpen?: () => void;
@@ -13,7 +14,7 @@ interface HeaderProps {
   countries?: { code: string; name: string }[];
 }
 
-export function Header({ onMobileMenuOpen, onSearch, onMobileSearchOpen, languages, categories, countries = [] }: HeaderProps) {
+export function Header({ searchQuery, onMobileMenuOpen, onSearch, onMobileSearchOpen, languages, categories, countries = [] }: HeaderProps) {
   return (
     <header className="sticky top-0 z-10 bg-card border-b border-border shadow-sm"
     >
@@ -32,10 +33,11 @@ export function Header({ onMobileMenuOpen, onSearch, onMobileSearchOpen, languag
           </div>
 
           <div className="flex items-center gap-4">
-            <ExpandableSearch
-              onSearch={onSearch}
+            <SimpleSearch
+              value={searchQuery}
+              onChange={onSearch}
+              className="w-full max-w-md"
               placeholder="Search channels..."
-              className="w-full max-w-md hidden sm:block"
             />
             {onMobileSearchOpen && (
               <button

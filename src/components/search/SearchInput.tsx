@@ -28,7 +28,7 @@ const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
             'w-full h-12 pl-11 pr-11',
             'bg-background',
             'border-2 border-input',
-            'rounded-xl text-base text-foreground',
+            'rounded-xl text-base text-gray-800 dark:text-gray-100',
             'placeholder:text-muted-foreground',
             'focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20',
             'transition-all duration-200 ease-in-out',
@@ -43,12 +43,11 @@ const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.8 }}
               onClick={onClear}
-              className="absolute right-3 p-1.5 rounded-full
-                bg-muted hover:bg-accent text-muted-foreground hover:text-accent-foreground
-                transition-all duration-200"
+              className="absolute right-3 top-1/2 -translate-y-1/2 p-1
+                text-muted-foreground hover:text-foreground
+                transition-colors"
               aria-label="Clear search"
             >
-              <X className="w-4 h-4" />
             </motion.button>
           )}
         </AnimatePresence>

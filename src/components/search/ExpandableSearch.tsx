@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { AnimatePresence } from 'framer-motion';
+import { Search } from 'lucide-react';
 import SearchInput from './SearchInput';
 import SearchSuggestions from './SearchSuggestions';
 import { useClickOutside } from '../../hooks/useClickOutside';
@@ -46,19 +47,21 @@ export default function ExpandableSearch({
 
   const handleSearch = (searchQuery: string) => {
     if (!searchQuery.trim()) return;
-    
+
     // Update recent searches
     const updated = [
       searchQuery,
       ...recentSearches.filter(s => s !== searchQuery)
     ].slice(0, 5);
-    
+
     setRecentSearches(updated);
     localStorage.setItem('recentSearches', JSON.stringify(updated));
-    
+
     onSearch(searchQuery.trim());
     setShowSuggestions(false);
   };
+
+
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -89,7 +92,9 @@ export default function ExpandableSearch({
             ref={inputRef}
             value={query}
             onChange={(e) => {
-              setQuery(e.target.value);
+              const newValue = e.target.value;
+              setQuery(newValue);
+              onSearch(newValue);
               setShowSuggestions(true);
             }}
             onFocus={() => setShowSuggestions(true)}
@@ -98,6 +103,7 @@ export default function ExpandableSearch({
             expanded={true}
           />
         </div>
+
       </form>
 
       <AnimatePresence>

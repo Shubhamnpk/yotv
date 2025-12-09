@@ -10,6 +10,7 @@ import {
 } from './api';
 import type { Channel, Stream, Category, Language, Country, Logo } from './types';
 import { isValidStreamUrl } from './utils/streamUtils';
+import { filterChannels } from './hooks/useSearchSuggestions';
 import LoadingScreen from './components/LoadingScreen';
 import MobileNav from './components/MobileNav';
 import SearchOverlay from './components/SearchOverlay';
@@ -78,15 +79,23 @@ function App() {
           }
         });
 
+        const countryLanguages = new Map<string, string[]>();
+        const countryNameToCode = new Map<string, string>();
+        countriesData.forEach((country: Country) => {
+          countryLanguages.set(country.code, country.languages);
+          countryNameToCode.set(country.name, country.code);
+        });
+
         const apiChannels = channelsData.map((channel: Channel) => ({
           ...channel,
           logo: logoMap.get(channel.id),
+          languages: countryLanguages.get(channel.country) || [],
         }));
 
         const youtubeChannels = youtubeSourcesData.sources.map((source) => ({
           id: source.id,
           name: source.name,
-          country: source.country,
+          country: countryNameToCode.get(source.country) || source.country,
           languages: [source.lang],
           categories: source.categories,
           logo: source.img,
@@ -125,10 +134,8 @@ function App() {
   }, [channels, streams]);
 
   const filteredChannels = useMemo(() => {
-    return validChannels.filter((channel) => {
-      const matchesSearch = channel.name
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase());
+    let result = searchQuery ? filterChannels(validChannels, searchQuery) : validChannels;
+    result = result.filter((channel) => {
       const matchesCategory =
         !selectedCategory || channel.categories.includes(selectedCategory);
       const matchesLanguage =
@@ -140,8 +147,9 @@ function App() {
         )) &&
         (settings.preferredCountries.length === 0 ||
         settings.preferredCountries.includes(channel.country));
-      return matchesSearch && matchesCategory && matchesLanguage && matchesPreferences;
+      return matchesCategory && matchesLanguage && matchesPreferences;
     });
+    return result;
   }, [
     validChannels,
     searchQuery,
@@ -165,6 +173,7 @@ function App() {
     <ErrorBoundary>
       <div className="min-h-screen bg-background text-foreground">
         <Header
+          searchQuery={searchQuery}
           onMobileMenuOpen={() => setIsMobileMenuOpen(true)}
           onSearch={setSearchQuery}
           onMobileSearchOpen={() => setIsSearchOpen(true)}
@@ -213,6 +222,7 @@ function App() {
                   countries={countries}
                   selectedCategory={selectedCategory}
                   selectedLanguage={selectedLanguage}
+                  searchQuery={searchQuery}
                   onCategoryChange={setSelectedCategory}
                   onLanguageChange={setSelectedLanguage}
                   onChannelSelect={handleChannelSelect}
@@ -232,16 +242,15 @@ function App() {
                 />
               ) : (
                 <ChannelSection
-                  channels={filteredChannels}
-                  categories={categories}
-                  languages={languages}
-                  countries={countries}
-                  selectedCategory={selectedCategory}
-                  selectedLanguage={selectedLanguage}
-                  onCategoryChange={setSelectedCategory}
-                  onLanguageChange={setSelectedLanguage}
-                  onChannelSelect={handleChannelSelect}
-                />
+                      channels={filteredChannels}
+                      categories={categories}
+                      languages={languages}
+                      countries={countries}
+                      selectedCategory={selectedCategory}
+                      selectedLanguage={selectedLanguage}
+                      onCategoryChange={setSelectedCategory}
+                      onLanguageChange={setSelectedLanguage}
+                      onChannelSelect={handleChannelSelect} searchQuery={''}                />
               )}
             </>
           )}
