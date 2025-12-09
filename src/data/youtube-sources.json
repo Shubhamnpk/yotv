@@ -26,7 +26,7 @@
       "country": "UK",
       "country_code": "GB",
       "name": "Sky tv",
-      "url": "https://youtu.be/oJUvTVdTMyY",
+      "url": "https://www.youtube.com/watch?v=YDvsBbKfLPA",
       "img": "https://th.bing.com/th/id/OIP.4o57hS5whWA9eZ6nnux2YwHaFP?rs=1&pid=ImgDetMain",
       "categories": ["news"]
     },
@@ -36,8 +36,49 @@
       "country": "World",
       "country_code": "INT",
       "name": "UN",
-      "url": "https://youtu.be/wfAa1GiNdgM",
+      "url": "https://www.youtube.com/watch?v=vYRfQo6JMxc",
       "img": "https://yt3.googleusercontent.com/ytc/AIdro_mhklaGL8Bhv52CUPcBs7hkD_NvL1T6b98voTSC0aCTxmM=s160-c-k-c0x00ffffff-no-rj",
+      "categories": ["news"]
+    },
+
+    {
+      "id": "05",
+      "lang": "English",
+      "country": "United States",
+      "country_code": "US",
+      "name": "CNN",
+      "url": "https://www.youtube.com/watch?v=HGJVf6T6lJY",
+      "img": "https://yt3.googleusercontent.com/ytc/AIdro_mLuEsVhJwBYVh6gdnIrVnDAKGODEFwR_wZUxj7E=s160-c-k-c0x00ffffff-no-rj",
+      "categories": ["news"]
+    },
+    {
+      "id": "06",
+      "lang": "English",
+      "country": "UK",
+      "country_code": "GB",
+      "name": "BBC News",
+      "url": "https://www.youtube.com/watch?v=-v6rE_NNq-g",
+      "img": "https://yt3.googleusercontent.com/ytc/AIdro_mhHKS8Zr6g9mOJcJlFqVuLZPRYrJ0bF_wbAiwO=s160-c-k-c0x00ffffff-no-rj",
+      "categories": ["news"]
+    },
+    {
+      "id": "07",
+      "lang": "English",
+      "country": "Germany",
+      "country_code": "DE",
+      "name": "DW News",
+      "url": "https://www.youtube.com/watch?v=hJIHqnFBf0M",
+      "img": "https://yt3.googleusercontent.com/ytc/AIdro_nn8W6f9pnqG2JvbUr7EKTx-QWVvh9qKNsr3QCsTfqs=s160-c-k-c0x00ffffff-no-rj",
+      "categories": ["news"]
+    },
+    {
+      "id": "08",
+      "lang": "English",
+      "country": "Qatar",
+      "country_code": "QA",
+      "name": "Al Jazeera English",
+      "url": "https://www.youtube.com/watch?v=-upyPouRrB8",
+      "img": "https://yt3.googleusercontent.com/ytc/AIdro_k1QXqoF5GvXKmNm77mDImQRKl-9TnL6bHj4-jtgGM=s160-c-k-c0x00ffffff-no-rj",
       "categories": ["news"]
     }
   ]
