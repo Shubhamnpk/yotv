@@ -39,7 +39,33 @@ function App() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
+const [currentRoute, setCurrentRoute] = useState(window.location.pathname);
 
+  useEffect(() => {
+    const handlePopstate = () => {
+      setCurrentRoute(window.location.pathname);
+    };
+    window.addEventListener('popstate', handlePopstate);
+    return () => window.removeEventListener('popstate', handlePopstate);
+  }, []);
+
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const q = urlParams.get('q');
+    if (q && q !== searchQuery) {
+      setSearchQuery(q);
+    }
+  }, []);
+
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    if (searchQuery) {
+      url.searchParams.set('q', searchQuery);
+    } else {
+      url.searchParams.delete('q');
+    }
+    window.history.replaceState({}, '', url);
+  }, [searchQuery]);
   const { settings } = useStore();
 
   useEffect(() => {
