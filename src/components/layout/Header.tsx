@@ -21,14 +21,6 @@ export function Header({ searchQuery, onMobileMenuOpen, onSearch, onMobileSearch
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center gap-4">
-            <button
-              onClick={onMobileMenuOpen}
-              className="lg:hidden p-2 rounded-lg hover:bg-accent min-w-[44px] min-h-[44px]
-                flex items-center justify-center touch-target"
-              aria-label="Open menu"
-            >
-              <Menu className="w-6 h-6" />
-            </button>
             <Logo />
           </div>
 
@@ -39,16 +31,6 @@ export function Header({ searchQuery, onMobileMenuOpen, onSearch, onMobileSearch
               className="w-full max-w-md"
               placeholder="Search channels..."
             />
-            {onMobileSearchOpen && (
-              <button
-                onClick={onMobileSearchOpen}
-                className="sm:hidden p-2 rounded-lg hover:bg-accent min-w-[44px] min-h-[44px]
-                  flex items-center justify-center touch-target"
-                aria-label="Open search"
-              >
-                <Search className="w-6 h-6" />
-              </button>
-            )}
             <Settings languages={languages} countries={countries} categories={categories} />
           </div>
         </div>
