@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { ChevronRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import useStore from '../store/useStore';
@@ -22,13 +22,33 @@ export default function QuickFilters({
   onCategoryChange
 }: QuickFiltersProps) {
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
+  const [maxFit, setMaxFit] = useState(5);
+  const containerRef = useRef<HTMLDivElement>(null);
   const { settings } = useStore();
+
+  const updateMaxFit = () => {
+    if (containerRef.current) {
+      const width = containerRef.current.clientWidth;
+      const buttonWidth = 85; // approximate width per button
+      const fit = Math.floor(width / buttonWidth);
+      setMaxFit(Math.max(fit, 1)); // at least 1
+    }
+  };
+
+  useEffect(() => {
+    updateMaxFit();
+    const handleResize = () => {
+      updateMaxFit();
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const sections = [
     {
       id: 'categories',
       title: 'Top Categories',
-      items: categories.slice(0, 5),
+      items: categories.slice(0, maxFit),
       allItems: categories,
       selected: selectedCategory ? [selectedCategory] : [],
       onChange: onCategoryChange,
@@ -60,7 +80,7 @@ export default function QuickFilters({
               </motion.button>
             </div>
 
-            <div className="flex flex-wrap gap-1.5">
+            <div ref={containerRef} className="flex gap-1.5 overflow-hidden">
               {section.id === 'categories' && (
                 <motion.button
                   whileHover={{ scale: 1.05 }}
