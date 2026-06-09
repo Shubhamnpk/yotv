@@ -80,7 +80,7 @@ function App() {
     }
     window.history.replaceState({}, '', url);
   }, [searchQuery]);
-  const { settings } = useStore();
+  const { settings, addToWatchHistory } = useStore();
 
   useEffect(() => {
     applyTheme(settings.theme);
@@ -210,6 +210,7 @@ function App() {
     const stream = streams.find((s) => s.channel === channel.id);
     setSelectedChannel(channel);
     setSelectedStream(stream || null);
+    addToWatchHistory(channel.id);
   };
 
   if (loading) {
@@ -256,6 +257,7 @@ function App() {
                 <PlayerSection
                   channel={selectedChannel}
                   stream={selectedStream}
+                  streams={streams}
                   onBack={() => {
                     setSelectedChannel(null);
                     setSelectedStream(null);
@@ -278,6 +280,7 @@ function App() {
                 <PlayerSection
                   channel={selectedChannel}
                   stream={selectedStream}
+                  streams={streams}
                   onBack={() => {
                     setSelectedChannel(null);
                     setSelectedStream(null);
