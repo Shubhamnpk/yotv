@@ -6,9 +6,8 @@ import {
   fetchCategories,
   fetchLanguages,
   fetchCountries,
-  fetchLogos,
 } from './api';
-import type { Channel, Stream, Category, Language, Country, Logo } from './types';
+import type { Channel, Stream, Category, Language, Country } from './types';
 import { isValidStreamUrl } from './utils/streamUtils';
 import { filterChannels } from './hooks/useSearchSuggestions';
 import LoadingScreen from './components/LoadingScreen';
@@ -18,10 +17,36 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { Header } from './components/layout/Header';
 import { PlayerSection } from './components/player/PlayerSection';
 import { ChannelSection } from './components/channels/ChannelSection';
-import Onboarding from './components/Onboarding';
 import useStore from './store/useStore';
 import { applyTheme } from './utils/themeUtils';
 import youtubeSourcesData from './data/youtube-sources.json';
+
+const PREVIEW_CHANNELS_PER_CATEGORY = 10;
+
+function limitChannelsByCategory(
+  channels: Channel[],
+  categories: Category[],
+  limit: number
+) {
+  const selectedChannelIds = new Set<string>();
+  const previewChannels: Channel[] = [];
+
+  categories.forEach((category) => {
+    let categoryCount = 0;
+
+    for (const channel of channels) {
+      if (categoryCount >= limit) break;
+      if (selectedChannelIds.has(channel.id)) continue;
+      if (!channel.categories.includes(category.id)) continue;
+
+      selectedChannelIds.add(channel.id);
+      previewChannels.push(channel);
+      categoryCount += 1;
+    }
+  });
+
+  return previewChannels;
+}
 
 function App() {
   const [channels, setChannels] = useState<Channel[]>([]);
@@ -29,7 +54,6 @@ function App() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [languages, setLanguages] = useState<Language[]>([]);
   const [countries, setCountries] = useState<Country[]>([]);
-  const [logos, setLogos] = useState<Logo[]>([]);
   const [selectedChannel, setSelectedChannel] = useState<Channel | null>(null);
   const [selectedStream, setSelectedStream] = useState<Stream | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -38,16 +62,6 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [showOnboarding, setShowOnboarding] = useState(false);
-const [currentRoute, setCurrentRoute] = useState(window.location.pathname);
-
-  useEffect(() => {
-    const handlePopstate = () => {
-      setCurrentRoute(window.location.pathname);
-    };
-    window.addEventListener('popstate', handlePopstate);
-    return () => window.removeEventListener('popstate', handlePopstate);
-  }, []);
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -73,35 +87,31 @@ const [currentRoute, setCurrentRoute] = useState(window.location.pathname);
   }, [settings.theme]);
 
   useEffect(() => {
-    if (!loading && countries.length > 0 && settings.preferredCountries.length === 0) {
-      setShowOnboarding(true);
-    }
-  }, [loading, countries, settings.preferredCountries]);
-
-  useEffect(() => {
     const abortController = new AbortController();
 
     const fetchData = async () => {
       try {
-        const [channelsData, streamsData, categoriesData, languagesData, countriesData, logosData] =
+        const [channelsData, streamsData, categoriesData, languagesData, countriesData] =
           await Promise.all([
             fetchChannels(),
             fetchStreams(),
             fetchCategories(),
             fetchLanguages(),
             fetchCountries(),
-            fetchLogos(),
           ]).catch((error) => {
             console.error('Error fetching data:', error);
-            return [[], [], [], [], [], []];
+            return [[], [], [], [], []];
           });
 
         if (abortController.signal.aborted) return;
 
-        const logoMap = new Map<string, string>();
-        logosData.forEach((logo: Logo) => {
-          if (!logoMap.has(logo.channel)) {
-            logoMap.set(logo.channel, logo.url);
+        const workingStreams = streamsData.filter(
+          (stream: Stream) => stream.channel && isValidStreamUrl(stream.url)
+        );
+        const streamByChannel = new Map<string, Stream>();
+        workingStreams.forEach((stream: Stream) => {
+          if (stream.channel && !streamByChannel.has(stream.channel)) {
+            streamByChannel.set(stream.channel, stream);
           }
         });
 
@@ -112,11 +122,12 @@ const [currentRoute, setCurrentRoute] = useState(window.location.pathname);
           countryNameToCode.set(country.name, country.code);
         });
 
-        const apiChannels = channelsData.map((channel: Channel) => ({
-          ...channel,
-          logo: logoMap.get(channel.id),
-          languages: countryLanguages.get(channel.country) || [],
-        }));
+        const apiChannels = channelsData
+          .filter((channel: Channel) => streamByChannel.has(channel.id))
+          .map((channel: Channel) => ({
+            ...channel,
+            languages: countryLanguages.get(channel.country) || [],
+          }));
 
         const youtubeChannels = youtubeSourcesData.sources.map((source) => ({
           id: source.id,
@@ -133,14 +144,10 @@ const [currentRoute, setCurrentRoute] = useState(window.location.pathname);
         }));
 
         setChannels([...apiChannels, ...youtubeChannels]);
-        setStreams([
-          ...streamsData.filter((stream: Stream) => isValidStreamUrl(stream.url)),
-          ...youtubeStreams,
-        ]);
+        setStreams([...streamByChannel.values(), ...youtubeStreams]);
         setCategories(categoriesData);
         setLanguages(languagesData);
         setCountries(countriesData);
-        setLogos(logosData);
       } finally {
         if (!abortController.signal.aborted) {
           setLoading(false);
@@ -184,6 +191,20 @@ const [currentRoute, setCurrentRoute] = useState(window.location.pathname);
     settings.preferredCategories,
     settings.preferredCountries,
   ]);
+
+  const visibleChannels = useMemo(() => {
+    const shouldShowFullList = Boolean(selectedCategory || searchQuery.trim() || selectedLanguage);
+
+    if (shouldShowFullList) {
+      return filteredChannels;
+    }
+
+    return limitChannelsByCategory(
+      filteredChannels,
+      categories,
+      PREVIEW_CHANNELS_PER_CATEGORY
+    );
+  }, [filteredChannels, categories, searchQuery, selectedCategory, selectedLanguage]);
 
   const handleChannelSelect = (channel: Channel) => {
     const stream = streams.find((s) => s.channel === channel.id);
@@ -242,15 +263,11 @@ const [currentRoute, setCurrentRoute] = useState(window.location.pathname);
                 />
               ) : (
                 <ChannelSection
-                  channels={filteredChannels}
+                  channels={visibleChannels}
                   categories={categories}
-                  languages={languages}
-                  countries={countries}
                   selectedCategory={selectedCategory}
-                  selectedLanguage={selectedLanguage}
                   searchQuery={searchQuery}
                   onCategoryChange={setSelectedCategory}
-                  onLanguageChange={setSelectedLanguage}
                   onChannelSelect={handleChannelSelect}
                 />
               )}
@@ -268,25 +285,17 @@ const [currentRoute, setCurrentRoute] = useState(window.location.pathname);
                 />
               ) : (
                 <ChannelSection
-                      channels={filteredChannels}
-                      categories={categories}
-                      languages={languages}
-                      countries={countries}
-                      selectedCategory={selectedCategory}
-                      selectedLanguage={selectedLanguage}
-                      onCategoryChange={setSelectedCategory}
-                      onLanguageChange={setSelectedLanguage}
-                      onChannelSelect={handleChannelSelect} searchQuery={''}                />
+                  channels={visibleChannels}
+                  categories={categories}
+                  selectedCategory={selectedCategory}
+                  searchQuery={searchQuery}
+                  onCategoryChange={setSelectedCategory}
+                  onChannelSelect={handleChannelSelect}
+                />
               )}
             </>
           )}
         </main>
-
-        <Onboarding
-          countries={countries}
-          isOpen={showOnboarding}
-          onComplete={() => setShowOnboarding(false)}
-        />
       </div>
     </ErrorBoundary>
   );

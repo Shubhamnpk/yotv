@@ -1,33 +1,30 @@
 import { motion } from 'framer-motion';
+import { RadioTower, Sparkles } from 'lucide-react';
 import QuickFilters from '../QuickFilters';
 import ChannelGrid from '../ChannelGrid';
-import type { Channel, Category, Language, Country } from '../../types';
+import type { Channel, Category } from '../../types';
 
 interface ChannelSectionProps {
   channels: Channel[];
   categories: Category[];
-  languages: Language[];
-  countries: Country[];
   selectedCategory: string | null;
-  selectedLanguage: string | null;
   searchQuery: string;
   onCategoryChange: (category: string | null) => void;
-  onLanguageChange: (language: string | null) => void;
   onChannelSelect: (channel: Channel) => void;
 }
 
 export function ChannelSection({
   channels,
   categories,
-  languages,
-  countries,
   selectedCategory,
-  selectedLanguage,
   searchQuery,
   onCategoryChange,
-  onLanguageChange,
   onChannelSelect,
 }: ChannelSectionProps) {
+  const categoryName = selectedCategory
+    ? categories.find((category) => category.id === selectedCategory)?.name
+    : null;
+
   return (
     <motion.div
       key="grid"
@@ -36,13 +33,31 @@ export function ChannelSection({
       exit={{ opacity: 0 }}
       className="space-y-6"
     >
+      <section className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
+        <div className="flex flex-col gap-5 p-5 sm:flex-row sm:items-end sm:justify-between sm:p-6">
+          <div className="max-w-2xl">
+            <div className="mb-3 flex items-center gap-2 text-sm font-medium text-primary">
+              <Sparkles className="h-4 w-4" />
+              <span>{categoryName || (searchQuery ? 'Search' : 'Live TV')}</span>
+            </div>
+            <h2 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+              {categoryName || (searchQuery ? `Results for "${searchQuery}"` : 'Working channels, ready to watch')}
+            </h2>
+          </div>
+          <div className="flex items-center gap-3 rounded-lg border border-border bg-background px-4 py-3">
+            <RadioTower className="h-5 w-5 text-primary" />
+            <div>
+              <div className="text-lg font-semibold leading-none">{channels.length}</div>
+              <div className="mt-1 text-xs text-muted-foreground">channels</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <QuickFilters
         categories={categories}
-        languages={languages}
-        countries={countries}
         selectedCategory={selectedCategory}
         onCategoryChange={onCategoryChange}
-        onLanguageChange={onLanguageChange}
       />
       {channels.length === 0 ? (
         <motion.div

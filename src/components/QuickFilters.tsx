@@ -1,30 +1,24 @@
 import { useState, useEffect, useRef } from 'react';
 import { ChevronRight } from 'lucide-react';
 import { motion } from 'framer-motion';
-import useStore from '../store/useStore';
+import type { Category } from '../types';
 import { cn } from '../utils/cn';
 import CategoryExpanded from './CategoryExpanded';
 
 interface QuickFiltersProps {
-  languages: { code: string; name: string }[];
-  countries: { code: string; name: string }[];
-  categories: { id: string; name: string }[];
+  categories: Category[];
   selectedCategory: string | null;
-  onLanguageChange: (lang: string | null) => void;
   onCategoryChange: (cat: string | null) => void;
 }
 
 export default function QuickFilters({
-  languages,
   categories,
   selectedCategory,
-  onLanguageChange,
   onCategoryChange
 }: QuickFiltersProps) {
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
   const [maxFit, setMaxFit] = useState(5);
   const containerRef = useRef<HTMLDivElement>(null);
-  const { settings } = useStore();
 
   const updateMaxFit = () => {
     if (containerRef.current) {
@@ -47,18 +41,18 @@ export default function QuickFilters({
   const sections = [
     {
       id: 'categories',
-      title: 'Top Categories',
+      title: 'Categories',
       items: categories.slice(0, maxFit),
       allItems: categories,
       selected: selectedCategory ? [selectedCategory] : [],
       onChange: onCategoryChange,
-      getLabel: (item: any) => item.name,
-      getValue: (item: any) => item.id
+      getLabel: (item: Category) => item.name,
+      getValue: (item: Category) => item.id
     }
   ];
 
   return (
-    <div className="relative bg-card rounded-xl shadow-sm border-2 border-border">
+    <div className="relative rounded-lg border border-border bg-card shadow-sm">
       <div>
         {sections.map(section => (
           <div key={section.id} className="p-4">
@@ -72,22 +66,21 @@ export default function QuickFilters({
                 onClick={() => setExpandedSection(
                   expandedSection === section.id ? null : section.id
                 )}
-                className="text-sm text-primary hover:text-primary/80 flex items-center gap-1
-                  px-2 py-1 rounded-full hover:bg-accent transition-colors"
+                className="flex items-center gap-1 rounded-md px-2 py-1 text-sm text-primary transition-colors hover:bg-accent hover:text-primary/80"
               >
                 More
                 <ChevronRight className="w-4 h-4" />
               </motion.button>
             </div>
 
-            <div ref={containerRef} className="flex gap-1.5 overflow-hidden">
+            <div ref={containerRef} className="flex gap-2 overflow-hidden">
               {section.id === 'categories' && (
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => section.onChange(null)}
                   className={cn(
-                    'px-2.5 py-1 text-sm rounded-full transition-all',
+                    'px-3 py-1.5 text-sm rounded-md transition-all',
                     'hover:ring-2 hover:ring-primary/20',
                     selectedCategory === null
                       ? 'bg-primary text-primary-foreground'
@@ -104,7 +97,7 @@ export default function QuickFilters({
                   whileTap={{ scale: 0.95 }}
                   onClick={() => section.onChange(section.getValue(item))}
                   className={cn(
-                    'px-2.5 py-1 text-sm rounded-full transition-all',
+                    'px-3 py-1.5 text-sm rounded-md transition-all',
                     'hover:ring-2 hover:ring-primary/20',
                     section.selected.includes(section.getValue(item))
                       ? 'bg-primary text-primary-foreground'

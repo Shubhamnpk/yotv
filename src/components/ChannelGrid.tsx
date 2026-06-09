@@ -1,5 +1,4 @@
-import React, { useMemo } from 'react';
-import { useVirtualizer } from '@tanstack/react-virtual';
+import { MonitorPlay } from 'lucide-react';
 import type { Channel } from '../types';
 import ChannelCard from './ChannelCard';
 import FavoriteChannels from './FavoriteChannels';
@@ -12,35 +11,22 @@ interface ChannelGridProps {
   onChannelSelect: (channel: Channel) => void;
 }
 
-export default function ChannelGrid({ channels, categories, selectedCategory, onChannelSelect }: ChannelGridProps) {
+export default function ChannelGrid({
+  channels,
+  categories,
+  selectedCategory,
+  onChannelSelect
+}: ChannelGridProps) {
   const { settings } = useStore();
-
-  const favoriteChannels = useMemo(() => 
-    channels.filter(channel => settings.favorites.includes(channel.id)),
-    [channels, settings.favorites]
+  const favoriteChannels = channels.filter((channel) =>
+    settings.favorites.includes(channel.id)
   );
-
-  const nonFavoriteChannels = useMemo(() =>
-    channels.filter(channel => !settings.favorites.includes(channel.id)),
-    [channels, settings.favorites]
+  const nonFavoriteChannels = channels.filter((channel) =>
+    !settings.favorites.includes(channel.id)
   );
-
-  const [columnCount, setColumnCount] = React.useState(Math.floor((window.innerWidth - 48) / 300));
-
-  React.useEffect(() => {
-    const handleResize = () => setColumnCount(Math.floor((window.innerWidth - 48) / 300));
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  const allChannelsParentRef = React.useRef<HTMLDivElement>(null);
-
-  const rowVirtualizer = useVirtualizer({
-    count: Math.ceil(nonFavoriteChannels.length / columnCount),
-    getScrollElement: () => allChannelsParentRef.current,
-    estimateSize: () => 300,
-    overscan: 5,
-  });
+  const title = selectedCategory
+    ? categories.find((category) => category.id === selectedCategory)?.name || 'Channels'
+    : 'Live now';
 
   return (
     <div className="space-y-8">
@@ -50,63 +36,33 @@ export default function ChannelGrid({ channels, categories, selectedCategory, on
       />
 
       <section className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold">
-            {selectedCategory
-              ? categories.find(cat => cat.id === selectedCategory)?.name || 'All Channels'
-              : 'All Channels'
-            }
-          </h2>
-          <span className="px-3 py-1 text-sm bg-gray-100 dark:bg-gray-800 rounded-full">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <MonitorPlay className="h-5 w-5" />
+            </div>
+            <div>
+              <h2 className="text-xl font-semibold tracking-tight text-foreground">
+                {title}
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                {nonFavoriteChannels.length} channels
+              </p>
+            </div>
+          </div>
+          <span className="rounded-md border border-border bg-card px-3 py-1.5 text-sm font-medium text-muted-foreground">
             {nonFavoriteChannels.length}
           </span>
         </div>
 
-        <div
-          ref={allChannelsParentRef}
-          className="h-[600px] overflow-auto rounded-xl"
-        >
-          <div
-            style={{
-              height: `${rowVirtualizer.getTotalSize()}px`,
-              width: '100%',
-              position: 'relative',
-            }}
-          >
-            {rowVirtualizer.getVirtualItems().map((virtualRow) => {
-              const startIndex = virtualRow.index * columnCount;
-              const channelSlice = nonFavoriteChannels.slice(startIndex, startIndex + columnCount);
-
-              return (
-                <div
-                  key={virtualRow.key}
-                  style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    width: '100%',
-                    height: `${virtualRow.size}px`,
-                    transform: `translateY(${virtualRow.start}px)`,
-                  }}
-                  className={`grid gap-6 p-4 ${
-                    settings.ui?.gridSize === 'small'
-                      ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5'
-                      : settings.ui?.gridSize === 'large'
-                      ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
-                      : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
-                  }`}
-                >
-                  {channelSlice.map((channel) => (
-                    <ChannelCard
-                      key={channel.id}
-                      channel={channel}
-                      onClick={() => onChannelSelect(channel)}
-                    />
-                  ))}
-                </div>
-              );
-            })}
-          </div>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {nonFavoriteChannels.map((channel) => (
+            <ChannelCard
+              key={channel.id}
+              channel={channel}
+              onClick={() => onChannelSelect(channel)}
+            />
+          ))}
         </div>
       </section>
     </div>

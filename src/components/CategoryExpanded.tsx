@@ -1,17 +1,18 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ChevronLeft, Search } from "lucide-react";
 import { useState, useEffect } from "react";
+import type { Category } from "../types";
 import { cn } from "../utils/cn";
 
 interface CategoryExpandedProps {
   isOpen: boolean;
   onClose: () => void;
   title: string;
-  items: any[];
+  items: Category[];
   selectedItem: string | null;
   onItemSelect: (item: string | null) => void;
-  getLabel: (item: any) => string;
-  getValue: (item: any) => string;
+  getLabel: (item: Category) => string;
+  getValue: (item: Category) => string;
 }
 
 export default function CategoryExpanded({

@@ -4,11 +4,13 @@ import { motion } from 'framer-motion';
 export default function Logo() {
   return (
     <motion.div
-      className="flex items-center gap-2"
-      whileHover={{ scale: 1.05 }}
+      className="flex items-center gap-3"
+      whileHover={{ scale: 1.02 }}
     >
-      <Tv className="h-8 w-8 text-blue-500" />
-      <h1 className="text-xl font-bold">YoTV</h1>
+      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
+        <Tv className="h-5 w-5" />
+      </div>
+      <h1 className="text-xl font-semibold tracking-tight">YoTV</h1>
     </motion.div>
   );
 }
