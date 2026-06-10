@@ -2,10 +2,10 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
 export default defineConfig({
-  base: '/yotv/',
+  base: '/',
   plugins: [react()],
   optimizeDeps: {
-    exclude: ['lucide-react'],
+    include: ['lucide-react'],
   },
   build: {
     target: 'esnext',
@@ -21,8 +21,12 @@ export default defineConfig({
     },
   },
   server: {
+    port: 5173,
+    strictPort: false,
+    hmr: true,
     headers: {
-      'Cache-Control': 'public, max-age=31536000',
+      // Never cache assets in dev — ensures hot reload always picks up fresh changes
+      'Cache-Control': 'no-store, no-cache, must-revalidate',
     },
   },
 });

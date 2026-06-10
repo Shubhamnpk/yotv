@@ -6,9 +6,10 @@ import ChannelCard from './ChannelCard';
 interface FavoriteChannelsProps {
   channels: Channel[];
   onChannelSelect: (channel: Channel) => void;
+  viewMode?: 'grid' | 'list';
 }
 
-export default function FavoriteChannels({ channels, onChannelSelect }: FavoriteChannelsProps) {
+export default function FavoriteChannels({ channels, onChannelSelect, viewMode = 'grid' }: FavoriteChannelsProps) {
   if (channels.length === 0) return null;
 
   return (
@@ -37,7 +38,11 @@ export default function FavoriteChannels({ channels, onChannelSelect }: Favorite
         </motion.span>
       </div>
       
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      <div className={
+        viewMode === 'list'
+          ? "grid grid-cols-1 md:grid-cols-2 gap-3"
+          : "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+      }>
         <AnimatePresence mode="popLayout">
           {channels.map((channel) => (
             <motion.div
@@ -53,6 +58,7 @@ export default function FavoriteChannels({ channels, onChannelSelect }: Favorite
             >
               <ChannelCard
                 channel={channel}
+                viewMode={viewMode}
                 onClick={() => onChannelSelect(channel)}
               />
             </motion.div>

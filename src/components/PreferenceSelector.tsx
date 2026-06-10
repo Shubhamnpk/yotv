@@ -3,20 +3,23 @@ import { Search, Check, Globe, MapPin, Tag, ChevronDown, ChevronUp, X } from 'lu
 import { motion, AnimatePresence } from 'framer-motion';
 import useStore from '../store/useStore';
 import { cn } from '../utils/cn';
+import type { Language, Country, Category } from '../types';
+
+type PreferenceItem = (Language | Country | Category) & { id?: string; code?: string };
 
 interface PreferenceSelectorProps {
-  languages: { code: string; name: string }[];
-  countries: { code: string; name: string }[];
-  categories: { id: string; name: string }[];
+  languages: Language[];
+  countries: Country[];
+  categories: Category[];
 }
 
 interface Section {
   title: string;
-  items: any[];
+  items: PreferenceItem[];
   selected: string[];
-  idKey: string;
-  nameKey: string;
-  updateKey: string;
+  idKey: 'code' | 'id';
+  nameKey: 'name';
+  updateKey: 'preferredLanguages' | 'preferredCountries' | 'preferredCategories';
   icon: React.ComponentType<{ className?: string }>;
 }
 
@@ -60,7 +63,7 @@ export default function PreferenceSelector({
   const [showMore, setShowMore] = useState<{ [key: string]: boolean }>({});
   const { settings, updateSettings } = useStore();
 
-  const sections = useMemo(() => [
+  const sections: Section[] = useMemo(() => [
     {
       title: 'Languages',
       items: languages,
@@ -91,7 +94,7 @@ export default function PreferenceSelector({
   ], [languages, countries, categories, settings]);
 
   const handleToggleAll = useCallback((section: Section, select: boolean) => {
-    const ids = select ? section.items.map((item: any) => item[section.idKey]) : [];
+    const ids = select ? section.items.map((item) => item[section.idKey] || '') : [];
     updateSettings({ [section.updateKey]: ids });
   }, [updateSettings]);
 
@@ -106,8 +109,8 @@ export default function PreferenceSelector({
     setShowMore(prev => ({ ...prev, [sectionTitle]: !prev[sectionTitle] }));
   };
 
-  const filteredItems = (items: any[], nameKey: string) => {
-    return items.filter((item: any) => item[nameKey].toLowerCase().includes(searchQuery));
+  const filteredItems = (items: PreferenceItem[], nameKey: 'name') => {
+    return items.filter((item) => item[nameKey].toLowerCase().includes(searchQuery));
   };
 
   return (
@@ -182,36 +185,40 @@ export default function PreferenceSelector({
                 className="overflow-hidden"
               >
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {displayItems.map((item: any) => (
-                    <motion.button
-                      key={item[section.idKey]}
-                      onClick={() => handleToggleItem(section, item[section.idKey])}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      className={cn(
-                        'flex items-center gap-3 p-3 rounded-lg text-left transition-all duration-200 border',
-                        section.selected.includes(item[section.idKey])
-                          ? 'bg-primary text-primary-foreground border-primary shadow-md'
-                          : 'bg-card hover:bg-accent text-card-foreground hover:text-accent-foreground border-border hover:border-primary/50'
-                      )}
-                      title={`${section.title}: ${item[section.nameKey]}`}
-                      aria-label={`${section.selected.includes(item[section.idKey]) ? 'Deselect' : 'Select'} ${item[section.nameKey]} ${section.title.toLowerCase().slice(0, -1)}`}
-                    >
-                      {section.title === 'Countries' && (
-                        <span className="text-lg" role="img" aria-label={`${item[section.nameKey]} flag`}>
-                          {getCountryFlag(item[section.idKey])}
+                  {displayItems.map((item) => {
+                    const itemId = item[section.idKey] || '';
+                    const isSelected = section.selected.includes(itemId);
+                    return (
+                      <motion.button
+                        key={itemId}
+                        onClick={() => handleToggleItem(section, itemId)}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        className={cn(
+                          'flex items-center gap-3 p-3 rounded-lg text-left transition-all duration-200 border',
+                          isSelected
+                            ? 'bg-primary text-primary-foreground border-primary shadow-md'
+                            : 'bg-card hover:bg-accent text-card-foreground hover:text-accent-foreground border-border hover:border-primary/50'
+                        )}
+                        title={`${section.title}: ${item[section.nameKey]}`}
+                        aria-label={`${isSelected ? 'Deselect' : 'Select'} ${item[section.nameKey]} ${section.title.toLowerCase().slice(0, -1)}`}
+                      >
+                        {section.title === 'Countries' && (
+                          <span className="text-lg" role="img" aria-label={`${item[section.nameKey]} flag`}>
+                            {getCountryFlag(itemId)}
+                          </span>
+                        )}
+                        {isSelected ? (
+                          <Check className="w-4 h-4 flex-shrink-0" />
+                        ) : (
+                          <div className="w-4 h-4 rounded-full border-2 border-current opacity-30" />
+                        )}
+                        <span className="truncate flex-1">
+                          <HighlightText text={item[section.nameKey]} highlight={searchQuery} />
                         </span>
-                      )}
-                      {section.selected.includes(item[section.idKey]) ? (
-                        <Check className="w-4 h-4 flex-shrink-0" />
-                      ) : (
-                        <div className="w-4 h-4 rounded-full border-2 border-current opacity-30" />
-                      )}
-                      <span className="truncate flex-1">
-                        <HighlightText text={item[section.nameKey]} highlight={searchQuery} />
-                      </span>
-                    </motion.button>
-                  ))}
+                      </motion.button>
+                    );
+                  })}
                 </div>
               </motion.div>
             </AnimatePresence>

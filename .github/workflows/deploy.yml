@@ -33,6 +33,10 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Build
         run: pnpm run build
+      # SPA fallback: copy index.html to 404.html so GitHub Pages
+      # serves the app for all routes (e.g. /watch/:channelId)
+      - name: Copy index.html to 404.html for SPA routing
+        run: cp ./dist/index.html ./dist/404.html
       - name: Setup Pages
         uses: actions/configure-pages@v4
       - name: Upload artifact

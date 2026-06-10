@@ -28,17 +28,20 @@ export default function ChannelGrid({
     ? categories.find((category) => category.id === selectedCategory)?.name || 'Channels'
     : 'Live now';
 
+  const viewMode = settings.ui.viewMode || 'grid';
+
   return (
     <div className="space-y-8">
       <FavoriteChannels
         channels={favoriteChannels}
+        viewMode={viewMode}
         onChannelSelect={onChannelSelect}
       />
 
       <section className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary shadow-inner">
               <MonitorPlay className="h-5 w-5" />
             </div>
             <div>
@@ -50,16 +53,21 @@ export default function ChannelGrid({
               </p>
             </div>
           </div>
-          <span className="rounded-md border border-border bg-card px-3 py-1.5 text-sm font-medium text-muted-foreground">
+          <span className="rounded-md border border-border/60 bg-card px-3 py-1.5 text-sm font-medium text-muted-foreground">
             {nonFavoriteChannels.length}
           </span>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className={
+          viewMode === 'list'
+            ? "grid grid-cols-1 md:grid-cols-2 gap-3"
+            : "grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+        }>
           {nonFavoriteChannels.map((channel) => (
             <ChannelCard
               key={channel.id}
               channel={channel}
+              viewMode={viewMode}
               onClick={() => onChannelSelect(channel)}
             />
           ))}

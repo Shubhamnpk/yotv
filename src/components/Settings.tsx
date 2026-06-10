@@ -2,7 +2,7 @@ import React, { useState, Suspense, lazy, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import * as Tabs from '@radix-ui/react-tabs';
 import * as Dialog from '@radix-ui/react-dialog';
-import { Settings as SettingsIcon, X, Heart, History, Moon, Sun, Monitor, Play, Eye } from 'lucide-react';
+import { Settings as SettingsIcon, X, Heart, History, Moon, Sun, Monitor, Play } from 'lucide-react';
 import useStore from '../store/useStore';
 import { cn } from '../utils/cn';
 import WatchHistory from './WatchHistory';
@@ -44,7 +44,7 @@ export default function Settings({
   useEffect(() => {
     if (settings.theme !== 'system') return;
 
-    const cleanup = watchSystemTheme((systemTheme) => {
+    const cleanup = watchSystemTheme(() => {
       applyTheme('system');
     });
 
@@ -247,7 +247,7 @@ export default function Settings({
                                   <span className="block mb-2 text-sm">Quality</span>
                                   <select
                                     value={settings.player?.quality ?? 'auto'}
-                                    onChange={(e) => updatePlayerSettings({ quality: e.target.value as any })}
+                                    onChange={(e) => updatePlayerSettings({ quality: e.target.value as 'auto' | 'low' | 'medium' | 'high' | 'ultra' })}
                                     className="w-full p-2 border border-input rounded-lg bg-background text-sm"
                                   >
                                     <option value="auto">Auto</option>
@@ -305,7 +305,7 @@ export default function Settings({
                                   <span className="block mb-2 text-sm">Grid Size</span>
                                   <select
                                     value={settings.ui?.gridSize ?? 'medium'}
-                                    onChange={(e) => updateUISettings({ gridSize: e.target.value as any })}
+                                    onChange={(e) => updateUISettings({ gridSize: e.target.value as 'small' | 'medium' | 'large' })}
                                     className="w-full p-2 border border-input rounded-lg bg-background text-sm"
                                   >
                                     <option value="small">Small</option>
