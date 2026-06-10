@@ -22,6 +22,7 @@ interface DataContextValue {
   loading: boolean;
   validChannels: Channel[];
   filteredChannels: Channel[];
+  visibleChannels: Channel[];
   getChannelById: (id: string) => Channel | undefined;
   getStreamsForChannel: (channelId: string) => Stream[];
   searchQuery: string;
@@ -119,35 +120,60 @@ export function DataProvider({ children }: { children: ReactNode }) {
         const workingStreams = streamsData.filter(
           (stream: Stream) => stream.channel && isValidStreamUrl(stream.url)
         );
-        const streamByChannel = new Map<string, Stream>();
+        // Keep ALL streams per channel so users can pick from multiple sources
+        const streamByChannel = new Map<string, Stream[]>();
         workingStreams.forEach((stream: Stream) => {
-          if (stream.channel && !streamByChannel.has(stream.channel)) {
-            streamByChannel.set(stream.channel, stream);
+          if (stream.channel) {
+            const existing = streamByChannel.get(stream.channel) || [];
+            existing.push(stream);
+            streamByChannel.set(stream.channel, existing);
           }
         });
+        const apiStreams = Array.from(streamByChannel.values()).flat();
 
+        const countryCodeToName = new Map<string, string>();
         const countryLanguages = new Map<string, string[]>();
         const countryNameToCode = new Map<string, string>();
         countriesData.forEach((country: Country) => {
+          countryCodeToName.set(country.code.toUpperCase(), country.name);
           countryLanguages.set(country.code, country.languages);
           countryNameToCode.set(country.name, country.code);
         });
 
-        const apiChannels = channelsData
-          .filter((channel: Channel) => streamByChannel.has(channel.id))
-          .map((channel: Channel) => ({
-            ...channel,
-            languages: countryLanguages.get(channel.country) || [],
-          }));
+        const langCodeToName = new Map<string, string>();
+        languagesData.forEach((lang: Language) => {
+          langCodeToName.set(lang.code.toLowerCase(), lang.name);
+        });
 
-        const youtubeChannels = youtubeSourcesData.sources.map((source) => ({
-          id: source.id,
-          name: source.name,
-          country: countryNameToCode.get(source.country) || source.country,
-          languages: [source.lang],
-          categories: source.categories,
-          logo: source.img,
-        }));
+        const channelsWithStreams = new Set(streamByChannel.keys());
+        const apiChannels = channelsData
+          .filter((channel: Channel) => channelsWithStreams.has(channel.id))
+          .map((channel: Channel) => {
+            const rawLangs = countryLanguages.get(channel.country) || [];
+            const languageNames = rawLangs.map((code) => langCodeToName.get(code.toLowerCase()) || code);
+            const countryName = countryCodeToName.get(channel.country.toUpperCase()) || channel.country;
+            return {
+              ...channel,
+              countryName,
+              languageNames,
+              languages: rawLangs,
+            };
+          });
+
+        const youtubeChannels = youtubeSourcesData.sources.map((source) => {
+          const countryCode = countryNameToCode.get(source.country) || source.country;
+          const countryName = countryCodeToName.get(countryCode.toUpperCase()) || source.country;
+          return {
+            id: source.id,
+            name: source.name,
+            country: countryCode,
+            countryName,
+            languages: [source.lang.toLowerCase()],
+            languageNames: [source.lang],
+            categories: source.categories,
+            logo: source.img,
+          };
+        });
 
         const youtubeStreams: Stream[] = youtubeSourcesData.sources.map((source) => ({
           channel: source.id,
@@ -160,7 +186,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         }));
 
         setChannels([...apiChannels, ...youtubeChannels]);
-        setStreams([...streamByChannel.values(), ...youtubeStreams]);
+        setStreams([...apiStreams, ...youtubeStreams]);
         setCategories(categoriesData);
         setLanguages(languagesData);
         setCountries(countriesData);
@@ -238,7 +264,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
     countries,
     loading,
     validChannels,
-    filteredChannels: visibleChannels,
+    filteredChannels,
+    visibleChannels,
     getChannelById,
     getStreamsForChannel,
     searchQuery,
@@ -249,7 +276,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     setSelectedLanguage,
   }), [
     channels, streams, categories, languages, countries, loading,
-    validChannels, visibleChannels, getChannelById, getStreamsForChannel,
+    validChannels, filteredChannels, visibleChannels, getChannelById, getStreamsForChannel,
     searchQuery, selectedCategory, selectedLanguage,
   ]);
 
@@ -260,6 +287,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useData() {
   const context = useContext(DataContext);
   if (!context) {

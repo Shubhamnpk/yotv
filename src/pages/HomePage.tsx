@@ -1,4 +1,3 @@
-import { AnimatePresence } from 'framer-motion';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { Header } from '../components/layout/Header';
 import { ChannelSection } from '../components/channels/ChannelSection';
@@ -13,6 +12,7 @@ export function HomePage() {
   const {
     loading,
     filteredChannels,
+    visibleChannels,
     categories,
     languages,
     countries,
@@ -69,7 +69,8 @@ export function HomePage() {
 
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <ChannelSection
-            channels={filteredChannels}
+            channels={visibleChannels}
+            totalCount={filteredChannels.length}
             categories={categories}
             selectedCategory={selectedCategory}
             searchQuery={searchQuery}

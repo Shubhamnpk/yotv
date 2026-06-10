@@ -2,22 +2,24 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { DataProvider } from './context/DataContext';
 import { HomePage } from './pages/HomePage';
 import { WatchPage } from './pages/WatchPage';
-import useStore from './store/useStore';
-import { useData } from './context/DataContext';
+import FloatScrollButton from './components/layout/FloatScrollButton';
+import ScrollToTop from './components/layout/ScrollToTop';
 
 function AppLayout() {
-  const { loading } = useData();
-
   return (
-    <Routes>
-      <Route path="/" element={<HomePage />} />
-      <Route path="/watch/:channelId" element={<WatchPage />} />
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+    <>
+      <ScrollToTop />
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/watch/:channelId" element={<WatchPage />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+      <FloatScrollButton />
+    </>
   );
 }
 
-function App() {
+export default function App() {
   return (
     <DataProvider>
       <AppLayout />
@@ -25,4 +27,4 @@ function App() {
   );
 }
 
-export default App;
+

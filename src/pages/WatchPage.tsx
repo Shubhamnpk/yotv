@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, AlertTriangle, Tv2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useData } from '../context/DataContext';
 import { PlayerSection } from '../components/player/PlayerSection';
@@ -17,7 +17,6 @@ export function WatchPage() {
   const navigate = useNavigate();
   const {
     channels,
-    streams,
     categories,
     languages,
     countries,
@@ -45,72 +44,67 @@ export function WatchPage() {
     return getStreamsForChannel(channelId);
   }, [channelId, getStreamsForChannel]);
 
-  const primaryStream = useMemo(() => {
-    return channelStreams[0] || null;
-  }, [channelStreams]);
+  const primaryStream = useMemo(() => channelStreams[0] || null, [channelStreams]);
 
-  // Find related channels based on matching categories
+  // Find related channels: same category first, then same country — up to 18
   const relatedChannels = useMemo(() => {
-    if (!channel || !channel.categories.length) return [];
-    
-    return channels
-      .filter((c) => {
-        if (c.id === channel.id) return false;
-        const hasMatchingCategory = c.categories.some((cat) =>
-          channel.categories.includes(cat)
-        );
-        return hasMatchingCategory;
-      })
-      .slice(0, 12);
+    if (!channel) return [];
+
+    const sameCat = channels.filter((c) => {
+      if (c.id === channel.id) return false;
+      return c.categories.some((cat) => channel.categories.includes(cat));
+    });
+
+    const sameCountry = channels.filter(
+      (c) => c.id !== channel.id && c.country === channel.country && !sameCat.find((x) => x.id === c.id)
+    );
+
+    return [...sameCat, ...sameCountry].slice(0, 18);
   }, [channels, channel]);
 
-  // Add to watch history when channel is viewed
   useEffect(() => {
-    if (channelId) {
-      addToWatchHistory(channelId);
-    }
+    if (channelId) addToWatchHistory(channelId);
   }, [channelId, addToWatchHistory]);
 
-  const handleBack = () => {
-    navigate(-1);
-  };
+  const handleBack = () => navigate(-1);
+  const handleChannelSelect = (id: string) => navigate(`/watch/${id}`);
 
-  const handleChannelSelect = (channelId: string) => {
-    navigate(`/watch/${channelId}`);
-  };
+  const sharedHeader = (
+    <>
+      <Header
+        searchQuery={searchQuery}
+        onMobileMenuOpen={() => setIsMobileMenuOpen(true)}
+        onSearch={setSearchQuery}
+        onMobileSearchOpen={() => setIsSearchOpen(true)}
+        languages={languages}
+        categories={categories}
+        countries={countries}
+      />
+      <MobileNav
+        isOpen={isMobileMenuOpen}
+        onClose={() => setIsMobileMenuOpen(false)}
+        categories={categories}
+        languages={languages}
+        selectedCategory={selectedCategory}
+        selectedLanguage={selectedLanguage}
+        onCategoryChange={setSelectedCategory}
+        onLanguageChange={setSelectedLanguage}
+      />
+      <SearchOverlay
+        isOpen={isSearchOpen}
+        onClose={() => setIsSearchOpen(false)}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+      />
+    </>
+  );
 
-  if (loading) {
-    return <LoadingScreen />;
-  }
+  if (loading) return <LoadingScreen />;
 
   if (!channel || !primaryStream) {
     return (
       <div className="min-h-screen bg-background text-foreground">
-        <Header
-          searchQuery={searchQuery}
-          onMobileMenuOpen={() => setIsMobileMenuOpen(true)}
-          onSearch={setSearchQuery}
-          onMobileSearchOpen={() => setIsSearchOpen(true)}
-          languages={languages}
-          categories={categories}
-          countries={countries}
-        />
-        <MobileNav
-          isOpen={isMobileMenuOpen}
-          onClose={() => setIsMobileMenuOpen(false)}
-          categories={categories}
-          languages={languages}
-          selectedCategory={selectedCategory}
-          selectedLanguage={selectedLanguage}
-          onCategoryChange={setSelectedCategory}
-          onLanguageChange={setSelectedLanguage}
-        />
-        <SearchOverlay
-          isOpen={isSearchOpen}
-          onClose={() => setIsSearchOpen(false)}
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-        />
+        {sharedHeader}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <div className="flex flex-col items-center justify-center gap-5 px-6 py-16">
             <div className="relative">
@@ -125,9 +119,8 @@ export function WatchPage() {
               </h3>
               <p className="text-sm text-muted-foreground max-w-sm">
                 {!channel
-                  ? `The channel with ID "${channelId}" was not found. It may have been removed or the link is incorrect.`
-                  : 'This channel does not have any working streams at the moment.'
-                }
+                  ? `The channel with ID "${channelId}" was not found.`
+                  : 'This channel does not have any working streams at the moment.'}
               </p>
             </div>
             <button
@@ -144,38 +137,17 @@ export function WatchPage() {
     );
   }
 
+  const categoryLabel = channel.categories
+    .map((cat) => categories.find((c) => c.id === cat)?.name || cat)
+    .join(' · ');
+
   return (
     <ErrorBoundary>
       <div className="min-h-screen bg-background text-foreground">
-        <Header
-          searchQuery={searchQuery}
-          onMobileMenuOpen={() => setIsMobileMenuOpen(true)}
-          onSearch={setSearchQuery}
-          onMobileSearchOpen={() => setIsSearchOpen(true)}
-          languages={languages}
-          categories={categories}
-          countries={countries}
-        />
+        {sharedHeader}
 
-        <MobileNav
-          isOpen={isMobileMenuOpen}
-          onClose={() => setIsMobileMenuOpen(false)}
-          categories={categories}
-          languages={languages}
-          selectedCategory={selectedCategory}
-          selectedLanguage={selectedLanguage}
-          onCategoryChange={setSelectedCategory}
-          onLanguageChange={setSelectedLanguage}
-        />
-
-        <SearchOverlay
-          isOpen={isSearchOpen}
-          onClose={() => setIsSearchOpen(false)}
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-        />
-
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-10">
+          {/* Player */}
           <motion.div
             key={channelId}
             initial={{ opacity: 0, y: 10 }}
@@ -190,27 +162,32 @@ export function WatchPage() {
             />
           </motion.div>
 
-          {/* More Channels Section - Related by Category */}
+          {/* Related channels */}
           {relatedChannels.length > 0 && (
             <motion.section
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: 0.2 }}
-              className="mt-10 space-y-5"
+              className="space-y-4"
             >
+              {/* Section header */}
               <div className="flex items-center gap-3">
-                <div className="h-1 w-8 rounded-full bg-primary" />
-                <h2 className="text-xl font-bold tracking-tight text-foreground">
-                  More Channels
-                </h2>
-                <span className="text-sm text-muted-foreground">
-                  {channel.categories
-                    .map((cat) => categories.find((c) => c.id === cat)?.name || cat)
-                    .join(', ')}
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                  <Tv2 className="h-5 w-5" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold tracking-tight text-foreground">More Like This</h2>
+                  {categoryLabel && (
+                    <p className="text-xs text-muted-foreground">{categoryLabel}</p>
+                  )}
+                </div>
+                <span className="ml-auto text-xs font-semibold text-muted-foreground border border-border/50 rounded-full px-3 py-1">
+                  {relatedChannels.length} channels
                 </span>
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+              {/* Netflix-style 4-col grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
                 {relatedChannels.map((relatedChannel) => (
                   <ChannelCard
                     key={relatedChannel.id}

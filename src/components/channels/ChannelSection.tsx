@@ -15,6 +15,7 @@ interface ChannelSectionProps {
   searchQuery: string;
   onCategoryChange: (category: string | null) => void;
   onChannelSelect: (channel: Channel) => void;
+  totalCount?: number;
 }
 
 export function ChannelSection({
@@ -24,6 +25,7 @@ export function ChannelSection({
   searchQuery,
   onCategoryChange,
   onChannelSelect,
+  totalCount,
 }: ChannelSectionProps) {
   const { settings, updateUISettings } = useStore();
   const categoryName = selectedCategory
@@ -100,7 +102,7 @@ export function ChannelSection({
             <div className="flex items-center gap-3 rounded-xl border border-border/60 bg-background/50 px-4 py-2 shadow-inner">
               <RadioTower className="h-5 w-5 text-primary animate-pulse" />
               <div>
-                <div className="text-xl font-extrabold leading-none">{channels.length}</div>
+                <div className="text-xl font-extrabold leading-none">{totalCount ?? channels.length}</div>
                 <div className="mt-0.5 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">channels</div>
               </div>
             </div>
@@ -126,7 +128,8 @@ export function ChannelSection({
             
             <div className="flex gap-4 overflow-x-auto pb-4 pt-1 scrollbar-hide snap-x snap-mandatory">
               {recentlyWatched.map((channel) => (
-                <div key={`recent-${channel.id}`} className="w-64 flex-shrink-0 snap-start">
+                <div key={`recent-${channel.id}`} className="w-44 flex-shrink-0 snap-start">
+
                   <ChannelCard
                     channel={channel}
                     viewMode="grid"

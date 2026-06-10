@@ -12,11 +12,10 @@ import {
   Sparkles,
   Loader2,
   Radio,
-  Monitor,
+  PictureInPicture2,
   Settings2,
   SkipForward,
   SkipBack,
-  ListVideo,
 } from 'lucide-react';
 import { isYouTubeUrl } from '../utils/streamUtils';
 import useStore from '../store/useStore';
@@ -66,10 +65,10 @@ function VideoPlayer({ src, poster, onReady, onError }: VideoPlayerProps) {
   const [duration, setDuration] = useState(0);
   const [buffered, setBuffered] = useState(0);
   const [showQualityMenu, setShowQualityMenu] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const progressRef = useRef<HTMLDivElement>(null);
   const [availableQualities, setAvailableQualities] = useState<{ height: number; index: number; name: string }[]>([]);
   const [currentQuality, setCurrentQuality] = useState<number>(-1); // -1 = auto
-  const [showVolumeSlider, setShowVolumeSlider] = useState(false);
-  const [isSeeking, setIsSeeking] = useState(false);
   const hlsRef = useRef<Hls | null>(null);
   const progressIntervalRef = useRef<number | null>(null);
 
@@ -450,10 +449,53 @@ function VideoPlayer({ src, poster, onReady, onError }: VideoPlayerProps) {
     if (!video || !duration) return;
     const rect = e.currentTarget.getBoundingClientRect();
     const x = e.clientX - rect.left;
-    const seekTime = (x / rect.width) * duration;
+    const seekTime = Math.max(0, Math.min((x / rect.width) * duration, duration));
     video.currentTime = seekTime;
     setCurrentTime(seekTime);
   };
+
+  // Drag-based seeking
+  const getSeekTimeFromEvent = useCallback((clientX: number): number | null => {
+    const video = videoRef.current;
+    const progressEl = progressRef.current;
+    if (!video || !duration || !progressEl) return null;
+    const rect = progressEl.getBoundingClientRect();
+    const x = clientX - rect.left;
+    return Math.max(0, Math.min((x / rect.width) * duration, duration));
+  }, [duration]);
+
+  const handleProgressMouseDown = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    e.stopPropagation();
+    setIsDragging(true);
+    const seekTime = getSeekTimeFromEvent(e.clientX);
+    if (seekTime !== null && videoRef.current) {
+      videoRef.current.currentTime = seekTime;
+      setCurrentTime(seekTime);
+    }
+  }, [getSeekTimeFromEvent]);
+
+  useEffect(() => {
+    if (!isDragging) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const seekTime = getSeekTimeFromEvent(e.clientX);
+      if (seekTime !== null && videoRef.current) {
+        videoRef.current.currentTime = seekTime;
+        setCurrentTime(seekTime);
+      }
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging, getSeekTimeFromEvent]);
 
   // Quality change handler
   const handleQualityChange = (levelIndex: number) => {
@@ -485,6 +527,7 @@ function VideoPlayer({ src, poster, onReady, onError }: VideoPlayerProps) {
   };
 
   const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
+  const hasSeekableDuration = duration > 0;
   const bufferedPercent = duration > 0 ? (buffered / duration) * 100 : 0;
 
   // YouTube player wrapper controls
@@ -705,23 +748,39 @@ function VideoPlayer({ src, poster, onReady, onError }: VideoPlayerProps) {
 
         {/* Bottom bar */}
         <div className="relative px-4 pb-4 pt-2 controls-overlay-element">
-          {/* Progress bar */}
-          <div className="group/progress mb-3 cursor-pointer" onClick={(e) => { e.stopPropagation(); handleSeek(e); }}>
-            <div className="relative h-1.5 rounded-full bg-white/20 overflow-hidden transition-all duration-150 group-hover/progress:h-2.5">
-              {/* Buffered */}
-              <div
-                className="absolute inset-y-0 left-0 bg-white/20 rounded-full transition-all duration-200"
-                style={{ width: `${bufferedPercent}%` }}
-              />
-              {/* Progress */}
-              <div
-                className="absolute inset-y-0 left-0 bg-primary rounded-full transition-all duration-200"
-                style={{ width: `${progressPercent}%` }}
-              >
-                <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-primary shadow-lg opacity-0 group-hover/progress:opacity-100 transition-opacity" />
+          {/* Progress bar - fully draggable */}
+          {hasSeekableDuration && (
+            <div
+              ref={progressRef}
+              className={cn(
+                "group/progress mb-3 cursor-pointer",
+                isDragging && "cursor-grabbing"
+              )}
+              onClick={(e) => { e.stopPropagation(); handleSeek(e); }}
+              onMouseDown={handleProgressMouseDown}
+            >
+              <div className={cn(
+                "relative rounded-full bg-white/20 overflow-hidden transition-all duration-150",
+                isDragging ? "h-3" : "h-1.5 group-hover/progress:h-2.5"
+              )}>
+                {/* Buffered */}
+                <div
+                  className="absolute inset-y-0 left-0 bg-white/20 rounded-full transition-all duration-200"
+                  style={{ width: `${bufferedPercent}%` }}
+                />
+                {/* Progress */}
+                <div
+                  className="absolute inset-y-0 left-0 bg-primary rounded-full transition-all duration-200"
+                  style={{ width: `${progressPercent}%` }}
+                >
+                  <div className={cn(
+                    "absolute right-0 top-1/2 -translate-y-1/2 w-3.5 h-3.5 rounded-full bg-primary shadow-[0_0_10px_2px] shadow-primary/60 transition-all duration-150",
+                    isDragging ? "opacity-100 scale-110" : "opacity-0 group-hover/progress:opacity-100"
+                  )} />
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
           <div className="flex items-center justify-between gap-4">
             {/* Left controls */}
@@ -804,7 +863,7 @@ function VideoPlayer({ src, poster, onReady, onError }: VideoPlayerProps) {
                   className="p-1.5 text-white/70 hover:text-white hover:scale-110 transition-transform"
                   title="Picture-in-Picture (p)"
                 >
-                  <Monitor className="h-4 w-4" />
+                  <PictureInPicture2 className="h-4 w-4" />
                 </button>
               )}
 
