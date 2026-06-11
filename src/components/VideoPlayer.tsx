@@ -75,6 +75,8 @@ function VideoPlayer({ src, poster, onReady, onError }: VideoPlayerProps) {
   const hlsRef = useRef<Hls | null>(null);
   const progressIntervalRef = useRef<number | null>(null);
   const isYouTube = isYouTubeUrl(src);
+  const lastPauseTimeRef = useRef(0);
+  const wasPlayingRef = useRef(playing);
 
   const seekTo = useCallback((seconds: number) => {
     if (isYouTube && playerRef.current) {
@@ -115,7 +117,21 @@ function VideoPlayer({ src, poster, onReady, onError }: VideoPlayerProps) {
   const handleYouTubeBuffer = useCallback(() => setIsLoading(true), []);
   const handleYouTubeBufferEnd = useCallback(() => setIsLoading(false), []);
 
-  // Auto-hide controls overlay
+  // Save position on pause, restore on resume (fixes live streams seeking to live)
+  useEffect(() => {
+    if (playing === wasPlayingRef.current) return;
+    wasPlayingRef.current = playing;
+
+    if (!playing) {
+      const pos = isYouTube ? currentTime : (videoRef.current?.currentTime ?? currentTime);
+      lastPauseTimeRef.current = pos;
+    } else if (lastPauseTimeRef.current > 0) {
+      const saved = lastPauseTimeRef.current;
+      lastPauseTimeRef.current = 0;
+      const id = setTimeout(() => seekTo(saved), 120);
+      return () => clearTimeout(id);
+    }
+  }, [playing, isYouTube, currentTime, seekTo]);
   useEffect(() => {
     if (!showControls) return;
     const timer = setTimeout(() => {
