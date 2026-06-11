@@ -80,6 +80,16 @@
       "url": "https://www.youtube.com/watch?v=-upyPouRrB8",
       "img": "https://yt3.googleusercontent.com/ytc/AIdro_k1QXqoF5GvXKmNm77mDImQRKl-9TnL6bHj4-jtgGM=s160-c-k-c0x00ffffff-no-rj",
       "categories": ["news"]
+    },
+    {
+      "id": "09",
+      "lang": "Nepali",
+      "country": "Nepal",
+      "country_code": "NP",
+      "name": "Public 4K TV",
+      "url": "http://103.180.240.141:8080/hls/main1/playlist.m3u8",
+      "img": "/logo/public4ktv.png",
+      "categories": ["news"]
     }
   ]
 }

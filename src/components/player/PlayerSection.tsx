@@ -6,19 +6,16 @@ import {
   BadgeCheck,
   Radio,
   RotateCcw,
-  Tv,
   Loader2,
   Globe,
-  Building2,
-  CalendarDays,
   ExternalLink,
   Info,
-  Layers,
   ChevronDown,
   ChevronUp,
   Signal,
   Youtube,
   Wifi,
+  ThumbsUp,
 } from 'lucide-react';
 
 import VideoPlayer from '../VideoPlayer';
@@ -44,45 +41,20 @@ function ChannelAvatar({ channel }: { channel: Channel }) {
     .toUpperCase();
 
   return (
-    <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-xl border border-border/60 bg-gradient-to-br from-slate-900 via-slate-800 to-primary/20 shadow-lg">
+    <div className="relative h-10 w-10 flex-shrink-0 overflow-hidden rounded-full border border-border/40 bg-gradient-to-br from-slate-900 via-slate-800 to-primary/20">
       {channel.logo && !imgErr ? (
         <img
           src={channel.logo}
           alt={channel.name}
-          className="h-full w-full object-contain p-2"
+          className="h-full w-full object-contain p-1.5"
           onError={() => setImgErr(true)}
         />
       ) : (
-        <div className="flex h-full w-full items-center justify-center text-lg font-extrabold text-primary">
+        <div className="flex h-full w-full items-center justify-center text-xs font-extrabold text-primary">
           {initials || 'TV'}
         </div>
       )}
     </div>
-  );
-}
-
-/** Small info badge */
-function Badge({
-  icon: Icon,
-  children,
-  variant = 'default',
-}: {
-  icon: React.ElementType;
-  children: React.ReactNode;
-  variant?: 'default' | 'live' | 'green' | 'muted';
-}) {
-  const cls = {
-    default: 'bg-primary/10 text-primary border-primary/20',
-    live: 'bg-red-600/10 text-red-500 border-red-500/20',
-    green: 'bg-green-500/10 text-green-500 border-green-500/20',
-    muted: 'bg-muted/60 text-muted-foreground border-border/40',
-  }[variant];
-
-  return (
-    <span className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1 text-xs font-bold uppercase tracking-wider ${cls}`}>
-      <Icon className="h-3.5 w-3.5" />
-      {children}
-    </span>
   );
 }
 
@@ -110,6 +82,7 @@ export function PlayerSection({ channel, stream, streams, onBack }: PlayerSectio
   const [isReady, setIsReady] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
   const [showMore, setShowMore] = useState(false);
+  const [showStreamPicker, setShowStreamPicker] = useState(false);
 
   const activeStream = streamOptions[activeStreamIndex] || stream;
 
@@ -147,68 +120,65 @@ export function PlayerSection({ channel, stream, streams, onBack }: PlayerSectio
   const streamType = isYouTubeUrl(activeStream.url) ? 'YouTube' : 'HLS';
   const launchedYear = channel.launched ? new Date(channel.launched).getFullYear() : null;
 
-  return (
-    <motion.div
-      key="player"
-      initial={{ opacity: 0, y: 30 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -30 }}
-      transition={{ duration: 0.4, ease: 'easeOut' }}
-      className="mx-auto max-w-5xl space-y-5"
-    >
-      {/* Back button */}
-      <motion.button
-        whileHover={{ x: -4, scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
-        onClick={onBack}
-        className="inline-flex items-center gap-2 rounded-xl border border-border/50 bg-card/40 backdrop-blur-md px-4 py-2.5 text-sm font-bold text-muted-foreground shadow-sm transition hover:border-primary/40 hover:text-foreground"
-      >
-        <ArrowLeft className="h-4 w-4 text-primary" />
-        Back to channels
-      </motion.button>
+  // Sort streams: YouTube first then HLS
+  const sortedStreamOptions = useMemo(() => {
+    return [...streamOptions].sort((a, b) => {
+      const aIsYT = isYouTubeUrl(a.url) ? 0 : 1;
+      const bIsYT = isYouTubeUrl(b.url) ? 0 : 1;
+      return aIsYT - bIsYT;
+    });
+  }, [streamOptions]);
 
-      {/* Main player card */}
-      <section className="overflow-hidden rounded-2xl border border-border/40 bg-card/25 shadow-xl backdrop-blur-md">
-        {/* Player or Error */}
+  return (
+    <div className="w-full space-y-3">
+      {/* Back button - subtle */}
+      <button
+        type="button"
+        onClick={onBack}
+        className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors"
+      >
+        <ArrowLeft className="h-3.5 w-3.5" />
+        Back
+      </button>
+
+      {/* Player */}
+      <div className="overflow-hidden rounded-xl bg-black shadow-2xl">
         {permanentError ? (
-          <div className="flex flex-col items-center justify-center gap-5 px-6 py-16">
+          <div className="flex flex-col items-center justify-center gap-4 px-6 py-16">
             <div className="relative">
               <div className="absolute inset-0 blur-2xl bg-destructive/20 rounded-full" />
-              <div className="relative flex h-20 w-20 items-center justify-center rounded-2xl border border-destructive/30 bg-destructive/10">
-                <AlertTriangle className="h-9 w-9 text-destructive" />
+              <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl border border-destructive/30 bg-destructive/10">
+                <AlertTriangle className="h-7 w-7 text-destructive" />
               </div>
             </div>
             <div className="text-center">
-              <h3 className="text-lg font-extrabold text-foreground mb-1">Stream Unavailable</h3>
-              <p className="text-sm text-muted-foreground max-w-sm">{permanentError}</p>
-              <p className="text-xs text-muted-foreground/60 mt-1">
-                Tried all {streamOptions.length} source{streamOptions.length > 1 ? 's' : ''} — none could be played.
-              </p>
+              <h3 className="text-base font-bold text-foreground mb-1">Stream Unavailable</h3>
+              <p className="text-xs text-muted-foreground max-w-sm">{permanentError}</p>
             </div>
-            <div className="flex gap-3">
+            <div className="flex gap-2">
               <button
                 type="button"
                 onClick={retryCurrentStream}
-                className="inline-flex items-center gap-2 rounded-xl border border-primary/40 bg-primary/10 px-4 py-2.5 text-sm font-bold text-primary transition hover:bg-primary hover:text-primary-foreground"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-primary/40 bg-primary/10 px-3 py-1.5 text-xs font-bold text-primary transition hover:bg-primary hover:text-primary-foreground"
               >
-                <RotateCcw className="h-4 w-4" />
+                <RotateCcw className="h-3.5 w-3.5" />
                 Try Again
               </button>
               <button
                 type="button"
                 onClick={onBack}
-                className="inline-flex items-center gap-2 rounded-xl border border-border/60 bg-card/40 px-4 py-2.5 text-sm font-bold text-muted-foreground transition hover:text-foreground"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-border/60 bg-card/40 px-3 py-1.5 text-xs font-bold text-muted-foreground transition hover:text-foreground"
               >
-                <ArrowLeft className="h-4 w-4" />
+                <ArrowLeft className="h-3.5 w-3.5" />
                 Other Channels
               </button>
             </div>
           </div>
         ) : (
-          <div className="relative bg-black aspect-video rounded-t-2xl overflow-hidden border-b border-border/20">
+          <div className="relative bg-black aspect-video">
             <Suspense fallback={
               <div className="flex aspect-video items-center justify-center bg-black/80">
-                <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                <Loader2 className="h-10 w-10 animate-spin text-primary" />
               </div>
             }>
               <VideoPlayer
@@ -221,270 +191,236 @@ export function PlayerSection({ channel, stream, streams, onBack }: PlayerSectio
             </Suspense>
 
             {playerError && (
-              <div className="absolute inset-x-4 bottom-4 rounded-xl border border-destructive/30 bg-black/85 p-4 text-white shadow-xl backdrop-blur-md">
-                <div className="flex items-start gap-3">
-                  <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0 text-destructive animate-bounce" />
+              <div className="absolute inset-x-4 bottom-4 rounded-lg border border-destructive/30 bg-black/85 p-3 text-white shadow-xl backdrop-blur-md">
+                <div className="flex items-start gap-2">
+                  <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0 text-destructive animate-bounce" />
                   <div>
-                    <p className="font-bold">{playerError}</p>
-                    <p className="mt-1 text-xs text-white/70">
+                    <p className="text-xs font-bold">{playerError}</p>
+                    <p className="mt-0.5 text-[10px] text-white/70">
                       Stream {activeStreamIndex + 1} of {streamOptions.length}
                     </p>
                   </div>
                 </div>
               </div>
             )}
+
+            {/* Status overlay when connected */}
+            {isReady && (
+              <div className="absolute top-3 left-3 flex items-center gap-1.5 rounded-md bg-black/60 px-2 py-1 backdrop-blur-sm">
+                <span className="h-2 w-2 rounded-full bg-green-500 shadow-[0_0_6px_2px] shadow-green-500/60 animate-pulse" />
+                <span className="text-[10px] font-bold text-white uppercase tracking-wider">LIVE</span>
+              </div>
+            )}
           </div>
         )}
+      </div>
 
-        {/* Channel info panel */}
-        <div className="p-6 space-y-5">
-          {/* Top row: icon + name + badges */}
-          <div className="flex items-start gap-4">
-            <ChannelAvatar channel={channel} />
-
-            <div className="flex-1 min-w-0">
-              {/* Status badges */}
-              <div className="mb-2 flex flex-wrap items-center gap-2 text-xs">
-                <Badge icon={Radio} variant="live">Live</Badge>
-                <Badge icon={Tv} variant="default">{streamType}</Badge>
-                {isReady && <Badge icon={BadgeCheck} variant="green">Connected</Badge>}
-                {streamOptions.length > 1 && (
-                  <Badge icon={Layers} variant="muted">{streamOptions.length} sources</Badge>
-                )}
-              </div>
-
-              <h2 className="text-2xl font-extrabold tracking-tight text-card-foreground leading-tight">
-                {channel.name}
-              </h2>
-
-              {/* Alt names */}
-              {channel.alt_names?.length > 0 && (
-                <p className="mt-0.5 text-xs text-muted-foreground truncate">
-                  Also known as: {channel.alt_names.slice(0, 3).join(', ')}
-                </p>
+      {/* Channel info bar - YouTube style */}
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex items-center gap-3 min-w-0">
+          <ChannelAvatar channel={channel} />
+          <div className="min-w-0">
+            <h2 className="text-base font-bold text-foreground truncate leading-tight">
+              {channel.name}
+            </h2>
+            <div className="flex items-center gap-2 mt-0.5">
+              <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                {countryFlag && <span>{countryFlag}</span>}
+                {channel.countryName || channel.country}
+              </span>
+              {channel.categories.length > 0 && (
+                <>
+                  <span className="text-muted-foreground/40">·</span>
+                  <span className="text-xs text-primary font-medium">
+                    {channel.categories[0]}
+                  </span>
+                </>
+              )}
+              {isReady && (
+                <>
+                  <span className="text-muted-foreground/40">·</span>
+                  <span className="flex items-center gap-1 text-xs text-green-500 font-semibold">
+                    <BadgeCheck className="h-3 w-3" />
+                    Connected
+                  </span>
+                </>
               )}
             </div>
-
-          </div>
-
-          {/* ── Stream Picker ── */}
-          {streamOptions.length > 1 && (
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Signal className="h-4 w-4 text-primary" />
-                <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-                  Choose Stream Source
-                </p>
-                <span className="ml-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">
-                  {streamOptions.length} available
-                </span>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {streamOptions.map((option, index) => {
-                  const isActive = index === activeStreamIndex;
-                  const isYT = isYouTubeUrl(option.url);
-                  // Derive quality label: use API field, or parse from URL, or fallback
-                  const qualityLabel = option.quality
-                    ? option.quality.toUpperCase()
-                    : isYT
-                    ? 'Auto'
-                    : 'HLS';
-                  // Friendly title: use stream title if not just the channel name, else generic
-                  const streamTitle =
-                    option.title && option.title !== channel.name
-                      ? option.title
-                      : `Source ${index + 1}`;
-
-                  return (
-                    <motion.button
-                      key={option.url}
-                      type="button"
-                      whileHover={{ scale: 1.01 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => {
-                        setActiveStreamIndex(index);
-                        setPlayerError(null);
-                        setPermanentError(null);
-                        setIsReady(false);
-                        setRetryCount(0);
-                      }}
-                      className={`relative flex items-center gap-3 rounded-xl border px-4 py-3 text-left transition-all duration-200 ${
-                        isActive
-                          ? 'border-primary bg-primary/10 shadow-md ring-1 ring-primary/30'
-                          : 'border-border/50 bg-background/30 hover:border-primary/40 hover:bg-background/60'
-                      }`}
-                    >
-                      {/* Type icon */}
-                      <div
-                        className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg ${
-                          isActive ? 'bg-primary text-primary-foreground' : 'bg-muted/60 text-muted-foreground'
-                        }`}
-                      >
-                        {isYT ? (
-                          <Youtube className="h-4 w-4" />
-                        ) : (
-                          <Wifi className="h-4 w-4" />
-                        )}
-                      </div>
-
-                      {/* Info */}
-                      <div className="flex-1 min-w-0">
-                        <p className={`text-sm font-bold truncate ${
-                          isActive ? 'text-primary' : 'text-foreground'
-                        }`}>
-                          {streamTitle}
-                        </p>
-                        <div className="flex items-center gap-1.5 mt-0.5">
-                          <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                            {isYT ? 'YouTube' : 'HLS'}
-                          </span>
-                          {qualityLabel !== 'HLS' && qualityLabel !== 'Auto' && (
-                            <>
-                              <span className="text-muted-foreground/40">·</span>
-                              <span className="text-[10px] font-bold text-primary/80 uppercase">{qualityLabel}</span>
-                            </>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Active indicator */}
-                      {isActive && (
-                        <div className="flex-shrink-0">
-                          <span className="flex h-2.5 w-2.5 rounded-full bg-primary shadow-[0_0_6px_2px] shadow-primary/50" />
-                        </div>
-                      )}
-                    </motion.button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-
-
-          {/* Metadata grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {/* Country */}
-            <div className="flex items-center gap-2.5 rounded-xl border border-border/40 bg-background/30 px-3 py-2.5">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary flex-shrink-0">
-                {countryFlag ? (
-                  <span className="text-lg leading-none">{countryFlag}</span>
-                ) : (
-                  <Globe className="h-4 w-4" />
-                )}
-              </div>
-              <div className="min-w-0">
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Country</p>
-                <p className="truncate text-xs font-bold text-foreground">{channel.countryName || channel.country}</p>
-              </div>
-            </div>
-
-            {/* Network */}
-            {channel.network && (
-              <div className="flex items-center gap-2.5 rounded-xl border border-border/40 bg-background/30 px-3 py-2.5">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary flex-shrink-0">
-                  <Building2 className="h-4 w-4" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Network</p>
-                  <p className="truncate text-xs font-bold text-foreground">{channel.network}</p>
-                </div>
-              </div>
-            )}
-
-            {/* Launched */}
-            {launchedYear && (
-              <div className="flex items-center gap-2.5 rounded-xl border border-border/40 bg-background/30 px-3 py-2.5">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary flex-shrink-0">
-                  <CalendarDays className="h-4 w-4" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Launched</p>
-                  <p className="truncate text-xs font-bold text-foreground">{launchedYear}</p>
-                </div>
-              </div>
-            )}
-
-            {/* Website */}
-            {channel.website && (
-              <div className="flex items-center gap-2.5 rounded-xl border border-border/40 bg-background/30 px-3 py-2.5">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary flex-shrink-0">
-                  <Globe className="h-4 w-4" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Website</p>
-                  <a
-                    href={channel.website}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={(e) => e.stopPropagation()}
-                    className="flex items-center gap-1 truncate text-xs font-bold text-primary hover:underline"
-                  >
-                    Visit site <ExternalLink className="h-3 w-3 flex-shrink-0" />
-                  </a>
-                </div>
-              </div>
+            {channel.alt_names?.length > 0 && (
+              <p className="mt-0.5 text-[10px] text-muted-foreground truncate max-w-xs">
+                Also known as: {channel.alt_names.slice(0, 2).join(', ')}
+              </p>
             )}
           </div>
-
-          {/* Categories */}
-          {channel.categories.length > 0 && (
-            <div className="flex flex-wrap gap-2 pt-1">
-              {channel.categories.map((cat) => (
-                <span
-                  key={cat}
-                  className="rounded-lg bg-primary/10 px-3 py-1 text-xs font-bold uppercase tracking-wider text-primary border border-primary/20"
-                >
-                  {cat}
-                </span>
-              ))}
-            </div>
-          )}
-
-          {/* Expandable more info */}
-          {(channel.owners?.length > 0 || channel.languageNames?.length) && (
-            <div className="border-t border-border/20 pt-3">
-              <button
-                type="button"
-                onClick={() => setShowMore((v) => !v)}
-                className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <Info className="h-3.5 w-3.5" />
-                {showMore ? 'Less info' : 'More info'}
-                {showMore ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
-              </button>
-
-              <AnimatePresence>
-                {showMore && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.2 }}
-                    className="overflow-hidden"
-                  >
-                    <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-                      {channel.owners?.length > 0 && (
-                        <div>
-                          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">Owners</p>
-                          <p className="text-xs text-foreground">{channel.owners.join(', ')}</p>
-                        </div>
-                      )}
-                      {channel.languageNames?.length > 0 && (
-                        <div>
-                          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">Languages</p>
-                          <p className="text-xs text-foreground">{channel.languageNames.join(', ')}</p>
-                        </div>
-                      )}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          )}
         </div>
-      </section>
-    </motion.div>
+
+        {/* Stream source selector - subtle button */}
+        {sortedStreamOptions.length > 1 && (
+          <div className="relative flex-shrink-0">
+            <button
+              type="button"
+              onClick={() => setShowStreamPicker(!showStreamPicker)}
+              className="flex items-center gap-1.5 rounded-lg border border-border/40 bg-card/30 px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:bg-accent/50 hover:text-foreground transition-colors"
+            >
+              <Signal className="h-3 w-3" />
+              {activeStreamIndex + 1}/{sortedStreamOptions.length}
+              {showStreamPicker ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+            </button>
+
+            <AnimatePresence>
+              {showStreamPicker && (
+                <motion.div
+                  initial={{ opacity: 0, y: -4, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -4, scale: 0.95 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute right-0 top-full mt-1 z-50 w-64 rounded-xl border border-border/40 bg-card shadow-xl backdrop-blur-xl"
+                >
+                  <div className="p-2 space-y-0.5">
+                    <p className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                      Sources
+                    </p>
+                    {sortedStreamOptions.map((option, index) => {
+                      const isActive = index === activeStreamIndex;
+                      const isYT = isYouTubeUrl(option.url);
+                      const qualityLabel = option.quality ? option.quality.toUpperCase() : isYT ? 'Auto' : 'HLS';
+
+                      return (
+                        <button
+                          key={option.url}
+                          type="button"
+                          onClick={() => {
+                            setActiveStreamIndex(index);
+                            setPlayerError(null);
+                            setPermanentError(null);
+                            setIsReady(false);
+                            setRetryCount(0);
+                            setShowStreamPicker(false);
+                          }}
+                          className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left transition-all ${
+                            isActive
+                              ? 'bg-primary/10 ring-1 ring-primary/30'
+                              : 'hover:bg-accent/50'
+                          }`}
+                        >
+                          <div className={`flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md ${
+                            isActive ? 'bg-primary text-primary-foreground' : 'bg-muted/60 text-muted-foreground'
+                          }`}>
+                            {isYT ? <Youtube className="h-3.5 w-3.5" /> : <Wifi className="h-3.5 w-3.5" />}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className={`text-xs font-semibold truncate ${isActive ? 'text-primary' : 'text-foreground'}`}>
+                              {option.title && option.title !== channel.name ? option.title : `Source ${index + 1}`}
+                            </p>
+                            <div className="flex items-center gap-1">
+                              <span className="text-[9px] font-medium text-muted-foreground uppercase">
+                                {isYT ? 'YouTube' : 'HLS'}
+                              </span>
+                              {qualityLabel !== 'HLS' && qualityLabel !== 'Auto' && (
+                                <>
+                                  <span className="text-muted-foreground/40">·</span>
+                                  <span className="text-[9px] font-bold text-primary/80 uppercase">{qualityLabel}</span>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                          {isActive && (
+                            <span className="flex h-2 w-2 rounded-full bg-primary shadow-[0_0_4px_1px] shadow-primary/50" />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        )}
+      </div>
+
+      {/* Compact metadata chips */}
+      <div className="flex flex-wrap items-center gap-1.5">
+        <span className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary border border-primary/20">
+          <Radio className="h-3 w-3" />
+          Live
+        </span>
+        <span className="inline-flex items-center gap-1 rounded-md bg-muted/60 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground border border-border/40">
+          {streamType}
+        </span>
+        {channel.network && (
+          <span className="inline-flex items-center gap-1 rounded-md bg-muted/60 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground border border-border/40">
+            {channel.network}
+          </span>
+        )}
+        {launchedYear && (
+          <span className="inline-flex items-center gap-1 rounded-md bg-muted/60 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground border border-border/40">
+            Since {launchedYear}
+          </span>
+        )}
+        {channel.website && (
+          <a
+            href={channel.website}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="inline-flex items-center gap-1 rounded-md bg-muted/60 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary border border-border/40 hover:bg-primary/10 transition-colors"
+          >
+            <ExternalLink className="h-2.5 w-2.5" />
+            Website
+          </a>
+        )}
+      </div>
+
+      {/* More info toggle */}
+      {(channel.owners?.length ?? 0) > 0 || (channel.languageNames?.length ?? 0) > 0 || channel.categories.length > 1 ? (
+        <div>
+          <button
+            type="button"
+            onClick={() => setShowMore((v) => !v)}
+            className="flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <Info className="h-3 w-3" />
+            {showMore ? 'Show less' : 'Show more'}
+            {showMore ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+          </button>
+
+          <AnimatePresence>
+            {showMore && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.2 }}
+                className="overflow-hidden"
+              >
+                <div className="mt-2 flex flex-wrap gap-x-6 gap-y-2 text-xs text-muted-foreground">
+                  {(channel.owners?.length ?? 0) > 0 && (
+                    <div>
+                      <span className="font-semibold text-foreground">Owners: </span>
+                      {channel.owners!.join(', ')}
+                    </div>
+                  )}
+                  {(channel.languageNames?.length ?? 0) > 0 && (
+                    <div>
+                      <span className="font-semibold text-foreground">Languages: </span>
+                      {channel.languageNames!.join(', ')}
+                    </div>
+                  )}
+                  {channel.categories.length > 0 && (
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      {channel.categories.map((cat) => (
+                        <span key={cat} className="rounded-md bg-primary/5 px-2 py-0.5 text-[10px] font-medium text-primary border border-primary/10">
+                          {cat}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      ) : null}
+    </div>
   );
 }

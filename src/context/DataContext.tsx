@@ -5,6 +5,7 @@ import {
   fetchCategories,
   fetchLanguages,
   fetchCountries,
+  fetchLogos,
 } from '../api';
 import type { Channel, Stream, Category, Language, Country } from '../types';
 import { isValidStreamUrl } from '../utils/streamUtils';
@@ -103,16 +104,17 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
     const fetchData = async () => {
       try {
-        const [channelsData, streamsData, categoriesData, languagesData, countriesData] =
+        const [channelsData, streamsData, categoriesData, languagesData, countriesData, logosData] =
           await Promise.all([
             fetchChannels(),
             fetchStreams(),
             fetchCategories(),
             fetchLanguages(),
             fetchCountries(),
+            fetchLogos(),
           ]).catch((error) => {
             console.error('Error fetching data:', error);
-            return [[], [], [], [], []];
+            return [[], [], [], [], [], []];
           });
 
         if (abortController.signal.aborted) return;
@@ -145,6 +147,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
           langCodeToName.set(lang.code.toLowerCase(), lang.name);
         });
 
+        const logoByChannelId = new Map<string, string>();
+        logosData.forEach((logo: { channel: string; url: string }) => {
+          logoByChannelId.set(logo.channel, logo.url);
+        });
+
         const channelsWithStreams = new Set(streamByChannel.keys());
         const apiChannels = channelsData
           .filter((channel: Channel) => channelsWithStreams.has(channel.id))
@@ -157,6 +164,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
               countryName,
               languageNames,
               languages: rawLangs,
+              logo: logoByChannelId.get(channel.id),
             };
           });
 

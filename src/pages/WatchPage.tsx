@@ -1,13 +1,13 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, AlertTriangle, Tv2 } from 'lucide-react';
+import { ArrowLeft, AlertTriangle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useData } from '../context/DataContext';
 import { PlayerSection } from '../components/player/PlayerSection';
+import { WatchSidebar } from '../components/watch/WatchSidebar';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { Header } from '../components/layout/Header';
 import LoadingScreen from '../components/LoadingScreen';
-import ChannelCard from '../components/ChannelCard';
 import MobileNav from '../components/MobileNav';
 import SearchOverlay from '../components/SearchOverlay';
 import useStore from '../store/useStore';
@@ -46,7 +46,7 @@ export function WatchPage() {
 
   const primaryStream = useMemo(() => channelStreams[0] || null, [channelStreams]);
 
-  // Find related channels: same category first, then same country — up to 18
+  // Find related channels: same category first, then same country — up to 30
   const relatedChannels = useMemo(() => {
     if (!channel) return [];
 
@@ -59,7 +59,7 @@ export function WatchPage() {
       (c) => c.id !== channel.id && c.country === channel.country && !sameCat.find((x) => x.id === c.id)
     );
 
-    return [...sameCat, ...sameCountry].slice(0, 18);
+    return [...sameCat, ...sameCountry].slice(0, 30);
   }, [channels, channel]);
 
   useEffect(() => {
@@ -137,68 +137,43 @@ export function WatchPage() {
     );
   }
 
-  const categoryLabel = channel.categories
-    .map((cat) => categories.find((c) => c.id === cat)?.name || cat)
-    .join(' · ');
-
   return (
     <ErrorBoundary>
       <div className="min-h-screen bg-background text-foreground">
         {sharedHeader}
 
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-10">
-          {/* Player */}
-          <motion.div
-            key={channelId}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <PlayerSection
-              channel={channel}
-              stream={primaryStream}
-              streams={channelStreams}
-              onBack={handleBack}
-            />
-          </motion.div>
+        <main className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-5 py-4">
+          {/* YouTube-style two-column layout */}
+          <div className="flex flex-col lg:flex-row gap-6">
+            {/* Left column: Player + info */}
+            <div className="flex-1 min-w-0">
+              <motion.div
+                key={channelId}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <PlayerSection
+                  channel={channel}
+                  stream={primaryStream}
+                  streams={channelStreams}
+                  onBack={handleBack}
+                />
+              </motion.div>
+            </div>
 
-          {/* Related channels */}
-          {relatedChannels.length > 0 && (
-            <motion.section
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: 0.2 }}
-              className="space-y-4"
-            >
-              {/* Section header */}
-              <div className="flex items-center gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                  <Tv2 className="h-5 w-5" />
-                </div>
-                <div>
-                  <h2 className="text-lg font-bold tracking-tight text-foreground">More Like This</h2>
-                  {categoryLabel && (
-                    <p className="text-xs text-muted-foreground">{categoryLabel}</p>
-                  )}
-                </div>
-                <span className="ml-auto text-xs font-semibold text-muted-foreground border border-border/50 rounded-full px-3 py-1">
-                  {relatedChannels.length} channels
-                </span>
+            {/* Right column: Suggestions sidebar */}
+            <div className="w-full lg:w-[380px] xl:w-[420px] flex-shrink-0">
+              <div className="lg:sticky lg:top-24 lg:max-h-[calc(100vh-8rem)] lg:overflow-y-auto scrollbar-thin">
+                <WatchSidebar
+                  channels={channels}
+                  categories={categories}
+                  currentChannelId={channel.id}
+                  relatedChannels={relatedChannels}
+                />
               </div>
-
-              {/* Netflix-style 4-col grid */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-                {relatedChannels.map((relatedChannel) => (
-                  <ChannelCard
-                    key={relatedChannel.id}
-                    channel={relatedChannel}
-                    viewMode="grid"
-                    onClick={() => handleChannelSelect(relatedChannel.id)}
-                  />
-                ))}
-              </div>
-            </motion.section>
-          )}
+            </div>
+          </div>
         </main>
       </div>
     </ErrorBoundary>

@@ -1,50 +1,47 @@
 import { useEffect, useState } from 'react';
 import { ArrowUp, ArrowDown } from 'lucide-react';
 
-/**
- * FloatScrollButton renders two floating action buttons:
- *   - Scroll Down: jumps to the bottom of the page.
- *   - Scroll Up: appears after scrolling down and scrolls back to top.
- * The component is positioned at the bottom‑right corner and uses smooth scrolling.
- */
 export default function FloatScrollButton() {
-  const [showUp, setShowUp] = useState(false);
+  const [isAtTop, setIsAtTop] = useState(true);
+  const [showButton, setShowButton] = useState(false);
 
-  // Show the "up" button after the user scrolls a certain distance.
   useEffect(() => {
     const handleScroll = () => {
-      setShowUp(window.scrollY > window.innerHeight);
+      const scrollY = window.scrollY;
+      const windowHeight = window.innerHeight;
+      const docHeight = document.body.scrollHeight;
+
+      setIsAtTop(scrollY < 100);
+
+      // Show button if we've scrolled at least one viewport height
+      // Or if we're not at the very bottom (for scroll down)
+      setShowButton(scrollY > windowHeight || scrollY < docHeight - windowHeight - 100);
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const scrollTo = (position: 'top' | 'bottom') => {
-    const y = position === 'top' ? 0 : document.body.scrollHeight;
-    window.scrollTo({ top: y, behavior: 'smooth' });
+  const handleClick = () => {
+    if (isAtTop) {
+      // Scroll to bottom
+      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    } else {
+      // Scroll to top
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   };
 
   return (
-    <div className="fixed bottom-4 right-4 flex flex-col gap-3 z-40">
-      {/* Scroll Down button */}
-      <button
-        onClick={() => scrollTo('bottom')}
-        className="flex items-center justify-center w-12 h-12 bg-primary text-primary-foreground rounded-full shadow-lg hover:opacity-90 transition-opacity"
-        aria-label="Scroll to bottom"
-      >
-        <ArrowDown className="w-6 h-6" />
-      </button>
-
-      {/* Scroll Up button – only visible after scrolling */}
-      {showUp && (
+    <>
+      {showButton && (
         <button
-          onClick={() => scrollTo('top')}
-          className="flex items-center justify-center w-12 h-12 bg-primary text-primary-foreground rounded-full shadow-lg hover:opacity-90 transition-opacity"
-          aria-label="Scroll to top"
+          onClick={handleClick}
+          className="fixed bottom-4 right-4 z-40 flex items-center justify-center w-12 h-12 bg-primary text-primary-foreground rounded-full shadow-lg hover:opacity-90 transition-opacity"
+          aria-label={isAtTop ? 'Scroll to bottom' : 'Scroll to top'}
         >
-          <ArrowUp className="w-6 h-6" />
+          {isAtTop ? <ArrowDown className="w-6 h-6" /> : <ArrowUp className="w-6 h-6" />}
         </button>
       )}
-    </div>
+    </>
   );
 }
