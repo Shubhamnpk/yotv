@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { useData } from '../context/DataContext';
 import { PlayerSection } from '../components/player/PlayerSection';
 import { WatchSidebar } from '../components/watch/WatchSidebar';
+import { Footer } from '../components/layout/Footer';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { Header } from '../components/layout/Header';
 import LoadingScreen from '../components/LoadingScreen';
@@ -185,6 +186,7 @@ export function WatchPage() {
             </div>
           </div>
         </main>
+        <Footer />
       </div>
     </ErrorBoundary>
   );

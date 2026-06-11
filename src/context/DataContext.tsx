@@ -24,6 +24,9 @@ interface DataContextValue {
   validChannels: Channel[];
   filteredChannels: Channel[];
   visibleChannels: Channel[];
+  displayChannels: Channel[];
+  hasMore: boolean;
+  loadMoreChannels: () => void;
   getChannelById: (id: string) => Channel | undefined;
   getStreamsForChannel: (channelId: string) => Stream[];
   searchQuery: string;
@@ -37,6 +40,7 @@ interface DataContextValue {
 const DataContext = createContext<DataContextValue | null>(null);
 
 const PREVIEW_CHANNELS_PER_CATEGORY = 10;
+const PAGE_SIZE = 50;
 
 function limitChannelsByCategory(
   channels: Channel[],
@@ -74,6 +78,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedLanguage, setSelectedLanguage] = useState<string | null>(null);
 
+  const [itemsToShow, setItemsToShow] = useState(PAGE_SIZE);
   const { settings } = useStore();
 
   useEffect(() => {
@@ -256,6 +261,20 @@ export function DataProvider({ children }: { children: ReactNode }) {
     );
   }, [filteredChannels, categories, searchQuery, selectedCategory, selectedLanguage]);
 
+  const displayChannels = useMemo(() => {
+    return visibleChannels.slice(0, itemsToShow);
+  }, [visibleChannels, itemsToShow]);
+
+  const hasMore = itemsToShow < visibleChannels.length;
+
+  const loadMoreChannels = useCallback(() => {
+    setItemsToShow((prev) => prev + PAGE_SIZE);
+  }, []);
+
+  useEffect(() => {
+    setItemsToShow(PAGE_SIZE);
+  }, [visibleChannels]);
+
   const getChannelById = useCallback((id: string) => {
     return channels.find((c) => c.id === id);
   }, [channels]);
@@ -274,6 +293,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
     validChannels,
     filteredChannels,
     visibleChannels,
+    displayChannels,
+    hasMore,
+    loadMoreChannels,
     getChannelById,
     getStreamsForChannel,
     searchQuery,
@@ -284,7 +306,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
     setSelectedLanguage,
   }), [
     channels, streams, categories, languages, countries, loading,
-    validChannels, filteredChannels, visibleChannels, getChannelById, getStreamsForChannel,
+    validChannels, filteredChannels, visibleChannels, displayChannels, hasMore, loadMoreChannels,
+    getChannelById, getStreamsForChannel,
     searchQuery, selectedCategory, selectedLanguage,
   ]);
 

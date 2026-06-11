@@ -1,4 +1,5 @@
 import { Menu, Search } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import SimpleSearch from '../search/SimpleSearch';
 import Settings from '../Settings';
 import Logo from '../Logo';
@@ -46,6 +47,9 @@ export function Header({
               className="w-full max-w-lg"
               placeholder="Search channels..."
             />
+            <Link to="/about" className="hidden lg:inline-flex text-xs text-muted-foreground hover:text-foreground transition-colors">
+              About
+            </Link>
             <Settings languages={languages} countries={countries} categories={categories} />
           </div>
 
