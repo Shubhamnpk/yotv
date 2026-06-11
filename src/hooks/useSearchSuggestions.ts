@@ -66,9 +66,11 @@ export function filterChannels(channels: Channel[], query: string): Channel[] {
   return channels.filter(channel => {
     const searchableText = [
       channel.name,
-      ...channel.categories,
-      ...channel.languages,
-      channel.country
+      channel.country,
+      channel.countryName || '',
+      ...(channel.categories || []),
+      ...(channel.languages || []),
+      ...(channel.languageNames || [])
     ].join(' ').toLowerCase();
 
     return searchTerms.every(term => searchableText.includes(term));

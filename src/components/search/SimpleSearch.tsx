@@ -4,6 +4,7 @@ import { Search, X, History, Star, TrendingUp } from 'lucide-react';
 import useStore from '../../store/useStore';
 import { cn } from '../../utils/cn';
 import { useSearchSuggestions } from '../../hooks/useSearchSuggestions';
+import { useData } from '../../context/DataContext';
 
 interface SimpleSearchProps {
   value: string;
@@ -21,6 +22,7 @@ export default function SimpleSearch({
   const [isFocused, setIsFocused] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const { settings } = useStore();
+  const { getChannelById } = useData();
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [trendingSearches] = useState([
     'News',
@@ -59,9 +61,9 @@ export default function SimpleSearch({
     inputRef.current?.focus();
   };
 
-  const handleSelectFavorite = (channelId: string) => {
-    onChange(channelId);
-    saveSearch(channelId);
+  const handleSelectFavorite = (channelName: string) => {
+    onChange(channelName);
+    saveSearch(channelName);
     inputRef.current?.focus();
   };
 
@@ -179,17 +181,21 @@ export default function SimpleSearch({
                   </span>
                 </div>
                 <div className="space-y-2">
-                  {settings.favorites.slice(0, 3).map((channelId) => (
-                    <button
-                      key={channelId}
-                      onClick={() => handleSelectFavorite(channelId)}
-                      className="w-full px-4 py-2 text-left rounded-xl
-                        hover:bg-accent text-foreground
-                        transition-all duration-200"
-                    >
-                      {channelId}
-                    </button>
-                  ))}
+                  {settings.favorites.slice(0, 3).map((channelId) => {
+                    const channel = getChannelById(channelId);
+                    const displayName = channel ? channel.name : channelId;
+                    return (
+                      <button
+                        key={channelId}
+                        onClick={() => handleSelectFavorite(displayName)}
+                        className="w-full px-4 py-2 text-left rounded-xl
+                          hover:bg-accent text-foreground
+                          transition-all duration-200"
+                      >
+                        {displayName}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}

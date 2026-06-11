@@ -17,7 +17,7 @@
       "country_code": "NP",
       "name": "Avenues Khabar",
       "url": "https://www.youtube.com/watch?v=CLNB81Zf-S8",
-      "img": "https://imgur.com/ZE8Q4Hm",
+      "img": "https://i.imgur.com/ZE8Q4Hm.png",
       "categories": ["news"]
     },
     {
@@ -79,6 +79,66 @@
       "name": "Al Jazeera English",
       "url": "https://www.youtube.com/watch?v=-upyPouRrB8",
       "img": "https://yt3.googleusercontent.com/ytc/AIdro_k1QXqoF5GvXKmNm77mDImQRKl-9TnL6bHj4-jtgGM=s160-c-k-c0x00ffffff-no-rj",
+      "categories": ["news"]
+    },
+    {
+      "id": "09",
+      "lang": "Nepali",
+      "country": "Nepal",
+      "country_code": "NP",
+      "name": "Public 4K TV",
+      "url": "http://103.180.240.141:8080/hls/main1/playlist.m3u8",
+      "img": "/logo/public4ktv.png",
+      "categories": ["news"]
+    },
+    {
+      "id": "10",
+      "lang": "Nepali",
+      "country": "Nepal",
+      "country_code": "NP",
+      "name": "Kantipur TV HD",
+      "url": "https://www.youtube.com/watch?v=B9Ge_15b3Ls",
+      "img": "https://yt3.googleusercontent.com/YXzvH3AoE7WFD8dsWGPp-yBjG164vAN4K0UZFP-HirlbEu2KKnrlKpOp5F0VxekMSGOhLD2BPa0=s900-c-k-c0x00ffffff-no-rj",
+      "categories": ["news"]
+    },
+    {
+      "id": "11",
+      "lang": "Nepali",
+      "country": "Nepal",
+      "country_code": "NP",
+      "name": "Himalaya TV",
+      "url": "https://www.youtube.com/watch?v=F2OZ4oqYC2A",
+      "img": "https://yt3.googleusercontent.com/_iCZNx7DM0taIoYUTA_JglaVqYoGTJCOO8M-GzU_axG5dwDAkM7NheP_AUIZRL8EmHpHuo_xWKc=s900-c-k-c0x00ffffff-no-rj",
+      "categories": ["news", "entertainment"]
+    },
+    {
+      "id": "12",
+      "lang": "Nepali",
+      "country": "Nepal",
+      "country_code": "NP",
+      "name": "ABC News Nepal",
+      "url": "https://www.youtube.com/watch?v=xFeXFhsS7z0",
+      "img": "https://yt3.googleusercontent.com/6MeWmgYzOODtPFOxmaF4SV4YYiwEwXHxOqfjtDkMpAaGDrK-kOwAdYOIfkb5_uIbUQVJf1T-Xg=s900-c-k-c0x00ffffff-no-rj",
+      "categories": ["news"]
+    },
+    {
+      "id": "13",
+      "lang": "Nepali",
+      "country": "Nepal",
+      "country_code": "NP",
+      "name": "Sagarmatha TV",
+      "url": "https://www.youtube.com/watch?v=DnGgsP6TyEw",
+      "img": "https://yt3.googleusercontent.com/9pUYFI0uIZEU7UuuBjyAohey-Si2fLN6bb1uepoGfBK3kJZ9Vwg0ItKCkfBVvgXzoNVH4xuR=s900-c-k-c0x00ffffff-no-rj",
+      "categories": ["news"]
+    },
+    {
+      "id": "14",
+      "lang": "Nepali",
+      "country": "Nepal",
+      "country_code": "NP",
+      "name": "NTV World",
+      "url": "https://www.youtube.com/watch?v=xTVzpbdSgy0",
+      "img": "https://yt3.googleusercontent.com/kQu8Ma6-UQTVSvm0ddR4u5VDG6PaKaqh739WRwfMmkn7oqlfqWtg5lNrPZ17cBeX-3oy49jlGJM=s900-c-k-c0x00ffffff-no-rj",
       "categories": ["news"]
     }
   ]

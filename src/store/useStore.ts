@@ -31,6 +31,7 @@ interface UISettings {
   compactMode: boolean;
   showChannelLogos: boolean;
   showChannelNumbers: boolean;
+  viewMode: 'grid' | 'list';
 }
 
 interface PrivacySettings {
@@ -79,7 +80,7 @@ const useStore = create<Store>()(
         favorites: [],
         watchHistory: [],
         player: {
-          autoplay: false,
+          autoplay: true,
           volume: 0.8,
           quality: 'auto',
           subtitles: false,
@@ -92,7 +93,8 @@ const useStore = create<Store>()(
           animations: true,
           compactMode: false,
           showChannelLogos: true,
-          showChannelNumbers: false
+          showChannelNumbers: false,
+          viewMode: 'grid'
         },
         privacy: {
           analytics: true,
