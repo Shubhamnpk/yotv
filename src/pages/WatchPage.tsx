@@ -46,20 +46,30 @@ export function WatchPage() {
 
   const primaryStream = useMemo(() => channelStreams[0] || null, [channelStreams]);
 
-  // Find related channels: same category first, then same country — up to 30
+  // Find related channels prioritized by: same language → same category → same country — up to 40
   const relatedChannels = useMemo(() => {
     if (!channel) return [];
 
-    const sameCat = channels.filter((c) => {
-      if (c.id === channel.id) return false;
-      return c.categories.some((cat) => channel.categories.includes(cat));
-    });
+    const channelLangs = channel.languages || [];
+    const scored = channels
+      .filter((c) => c.id !== channel.id)
+      .map((c) => {
+        const cLangs = c.languages || [];
+        const sameLang = channelLangs.some((l) => cLangs.includes(l));
+        const sameCat = c.categories.some((cat) => channel.categories.includes(cat));
+        const sameCountry = c.country === channel.country;
+        let score = 0;
+        if (sameLang && sameCat) score = 4;
+        else if (sameLang) score = 3;
+        else if (sameCountry && sameCat) score = 2;
+        else if (sameCountry) score = 1;
+        return { channel: c, sameLang, sameCat, sameCountry, score };
+      })
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 40)
+      .map((item) => item.channel);
 
-    const sameCountry = channels.filter(
-      (c) => c.id !== channel.id && c.country === channel.country && !sameCat.find((x) => x.id === c.id)
-    );
-
-    return [...sameCat, ...sameCountry].slice(0, 30);
+    return scored;
   }, [channels, channel]);
 
   useEffect(() => {
@@ -168,7 +178,7 @@ export function WatchPage() {
                 <WatchSidebar
                   channels={channels}
                   categories={categories}
-                  currentChannelId={channel.id}
+                  currentChannel={channel}
                   relatedChannels={relatedChannels}
                 />
               </div>

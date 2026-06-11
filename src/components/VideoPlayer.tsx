@@ -52,6 +52,7 @@ function formatTime(seconds: number): string {
 function VideoPlayer({ src, poster, onReady, onError }: VideoPlayerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const playerRef = useRef<ReactPlayer>(null);
 
   const { settings } = useStore();
   const [isLoading, setIsLoading] = useState(true);
@@ -64,6 +65,8 @@ function VideoPlayer({ src, poster, onReady, onError }: VideoPlayerProps) {
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [buffered, setBuffered] = useState(0);
+  const [seekableStart, setSeekableStart] = useState(0);
+  const [seekableEnd, setSeekableEnd] = useState(0);
   const [showQualityMenu, setShowQualityMenu] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const progressRef = useRef<HTMLDivElement>(null);
@@ -71,6 +74,46 @@ function VideoPlayer({ src, poster, onReady, onError }: VideoPlayerProps) {
   const [currentQuality, setCurrentQuality] = useState<number>(-1); // -1 = auto
   const hlsRef = useRef<Hls | null>(null);
   const progressIntervalRef = useRef<number | null>(null);
+  const isYouTube = isYouTubeUrl(src);
+
+  const seekTo = useCallback((seconds: number) => {
+    if (isYouTube && playerRef.current) {
+      playerRef.current.seekTo(seconds);
+      youTubeProgressRef.current = { playedSeconds: seconds, timestamp: Date.now() };
+    } else if (videoRef.current) {
+      videoRef.current.currentTime = seconds;
+    }
+    setCurrentTime(seconds);
+  }, [isYouTube]);
+
+  const getMaxTime = useCallback(() => {
+    if (isYouTube) return duration || Infinity;
+    if (seekableEnd > seekableStart) return seekableEnd;
+    return videoRef.current?.duration || Infinity;
+  }, [isYouTube, duration, seekableEnd, seekableStart]);
+
+  const handleYouTubeProgress = useCallback((state: { playedSeconds: number; loadedSeconds: number }) => {
+    youTubeProgressRef.current = { playedSeconds: state.playedSeconds, timestamp: Date.now() };
+    setCurrentTime(state.playedSeconds);
+    setBuffered(state.loadedSeconds);
+  }, []);
+
+  const handleYouTubeDuration = useCallback((d: number) => {
+    setDuration(d);
+  }, []);
+
+  const handleYouTubeReady = useCallback(() => {
+    setIsLoading(false);
+    onReady?.();
+  }, [onReady]);
+
+  const handleYouTubeError = useCallback(() => {
+    setIsLoading(false);
+    onError?.('This YouTube stream is unavailable or blocked.');
+  }, [onError]);
+
+  const handleYouTubeBuffer = useCallback(() => setIsLoading(true), []);
+  const handleYouTubeBufferEnd = useCallback(() => setIsLoading(false), []);
 
   // Auto-hide controls overlay
   useEffect(() => {
@@ -160,6 +203,7 @@ function VideoPlayer({ src, poster, onReady, onError }: VideoPlayerProps) {
           toggleFullscreen();
           break;
         case 'p':
+          if (isYouTube) break;
           e.preventDefault();
           togglePiP();
           break;
@@ -176,17 +220,17 @@ function VideoPlayer({ src, poster, onReady, onError }: VideoPlayerProps) {
           break;
         case 'arrowright':
           e.preventDefault();
-          if (videoRef.current) {
-            videoRef.current.currentTime = Math.min(
-              videoRef.current.currentTime + 10,
-              videoRef.current.duration || Infinity
-            );
+          {
+            const maxTime = getMaxTime();
+            const cur = isYouTube ? currentTime : (videoRef.current?.currentTime || currentTime);
+            seekTo(Math.min(cur + 10, maxTime));
           }
           break;
         case 'arrowleft':
           e.preventDefault();
-          if (videoRef.current) {
-            videoRef.current.currentTime = Math.max(videoRef.current.currentTime - 10, 0);
+          {
+            const cur = isYouTube ? currentTime : (videoRef.current?.currentTime || currentTime);
+            seekTo(Math.max(cur - 10, 0));
           }
           break;
         default:
@@ -196,7 +240,7 @@ function VideoPlayer({ src, poster, onReady, onError }: VideoPlayerProps) {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [toggleFullscreen, togglePiP]);
+  }, [toggleFullscreen, togglePiP, seekTo, getMaxTime, currentTime, isYouTube]);
 
   // Keep playing state in a ref to avoid recreating the HLS effect
   const playingRef = useRef(playing);
@@ -204,25 +248,42 @@ function VideoPlayer({ src, poster, onReady, onError }: VideoPlayerProps) {
     playingRef.current = playing;
   }, [playing]);
 
-  // Progress tracking for HLS player
+  // Track last onProgress timestamp for YouTube smooth progress estimation
+  const youTubeProgressRef = useRef({ playedSeconds: 0, timestamp: 0 });
+
+  // Progress tracking for HLS player and YouTube fallback
   const startProgressTracking = useCallback(() => {
     if (progressIntervalRef.current) {
       clearInterval(progressIntervalRef.current);
     }
     progressIntervalRef.current = window.setInterval(() => {
+      if (isYouTube) {
+        // Estimate current time based on last known onProgress tick + elapsed wall time
+        const r = youTubeProgressRef.current;
+        if (r.timestamp > 0 && playing) {
+          const elapsed = (Date.now() - r.timestamp) / 1000;
+          setCurrentTime(r.playedSeconds + elapsed);
+        }
+        return;
+      }
       const video = videoRef.current;
       if (!video) return;
       setCurrentTime(video.currentTime);
-      setDuration(video.duration || 0);
+      const d = video.duration;
+      setDuration(isFinite(d) && d > 0 ? d : 0);
       if (video.buffered.length > 0) {
         setBuffered(video.buffered.end(video.buffered.length - 1));
       }
+      if (video.seekable.length > 0) {
+        setSeekableStart(video.seekable.start(0));
+        setSeekableEnd(video.seekable.end(video.seekable.length - 1));
+      }
     }, 250);
-  }, []);
+  }, [isYouTube, playing]);
 
   // HLS stream logic
   useEffect(() => {
-    if (!videoRef.current || isYouTubeUrl(src)) return;
+    if (!videoRef.current || isYouTube) return;
 
     const video = videoRef.current;
     let hls: Hls | null = null;
@@ -250,7 +311,8 @@ function VideoPlayer({ src, poster, onReady, onError }: VideoPlayerProps) {
       // Native HLS support (Safari)
       video.src = src;
       video.addEventListener('loadedmetadata', () => {
-        setDuration(video.duration || 0);
+        const d = video.duration;
+        setDuration(isFinite(d) && d > 0 ? d : 0);
       });
       startProgressTracking();
       if (playingRef.current && video.readyState >= 1) {
@@ -261,6 +323,7 @@ function VideoPlayer({ src, poster, onReady, onError }: VideoPlayerProps) {
         enableWorker: true,
         lowLatencyMode: false,
         backBufferLength: 30,
+        liveDurationInfinity: false,
         manifestLoadingTimeOut: 15000,
         levelLoadingTimeOut: 15000,
         fragLoadingTimeOut: 20000,
@@ -275,7 +338,8 @@ function VideoPlayer({ src, poster, onReady, onError }: VideoPlayerProps) {
         if (destroyed) return;
         manifestParsed = true;
         setIsLoading(false);
-        setDuration(video.duration || 0);
+        const d = video.duration;
+        setDuration(isFinite(d) && d > 0 ? d : 0);
 
         // Build quality menu from available levels
         if (hls && hls.levels.length > 0) {
@@ -417,16 +481,16 @@ function VideoPlayer({ src, poster, onReady, onError }: VideoPlayerProps) {
 
   // Sync state with HTML5 video element
   useEffect(() => {
-    if (!videoRef.current || isYouTubeUrl(src)) return;
+    if (!videoRef.current || isYouTube) return;
     const video = videoRef.current;
 
     video.volume = volume;
     video.muted = muted;
-  }, [volume, muted, src]);
+  }, [volume, muted, isYouTube]);
 
   // Play/Pause sync
   useEffect(() => {
-    if (!videoRef.current || isYouTubeUrl(src)) return;
+    if (!videoRef.current || isYouTube) return;
     const video = videoRef.current;
 
     if (playing) {
@@ -441,47 +505,81 @@ function VideoPlayer({ src, poster, onReady, onError }: VideoPlayerProps) {
     } else {
       video.pause();
     }
-  }, [playing, src]);
+  }, [playing, isYouTube]);
 
-  // Seek handler
+  // Seek handler - uses live video properties at seek time, not stale state
   const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
-    const video = videoRef.current;
-    if (!video || !duration) return;
-    const rect = e.currentTarget.getBoundingClientRect();
+    const progressEl = progressRef.current;
+    if (!progressEl) return;
+    const rect = progressEl.getBoundingClientRect();
     const x = e.clientX - rect.left;
-    const seekTime = Math.max(0, Math.min((x / rect.width) * duration, duration));
-    video.currentTime = seekTime;
-    setCurrentTime(seekTime);
+    const clickRatio = Math.max(0, Math.min(x / rect.width, 1));
+
+    if (isYouTube && playerRef.current) {
+      const dur = duration;
+      if (dur <= 0) return;
+      playerRef.current.seekTo(clickRatio * dur);
+      setCurrentTime(clickRatio * dur);
+    } else {
+      const video = videoRef.current;
+      if (!video) return;
+      const seekable = video.seekable;
+      if (seekable.length > 0) {
+        const rangeStart = seekable.start(0);
+        const rangeEnd = seekable.end(seekable.length - 1);
+        video.currentTime = rangeStart + clickRatio * (rangeEnd - rangeStart);
+      } else {
+        const vidDuration = video.duration;
+        if (!isFinite(vidDuration) || vidDuration <= 0) return;
+        video.currentTime = clickRatio * vidDuration;
+      }
+      setCurrentTime(video.currentTime);
+    }
   };
 
-  // Drag-based seeking
+  // Drag-based seeking - uses live video properties
   const getSeekTimeFromEvent = useCallback((clientX: number): number | null => {
-    const video = videoRef.current;
     const progressEl = progressRef.current;
-    if (!video || !duration || !progressEl) return null;
+    if (!progressEl) return null;
     const rect = progressEl.getBoundingClientRect();
     const x = clientX - rect.left;
-    return Math.max(0, Math.min((x / rect.width) * duration, duration));
-  }, [duration]);
+    const clickRatio = Math.max(0, Math.min(x / rect.width, 1));
+
+    if (isYouTube) {
+      const dur = duration;
+      if (dur <= 0) return null;
+      return clickRatio * dur;
+    }
+
+    const video = videoRef.current;
+    if (!video) return null;
+    const seekable = video.seekable;
+    if (seekable.length > 0) {
+      const rangeStart = seekable.start(0);
+      const rangeEnd = seekable.end(seekable.length - 1);
+      return rangeStart + clickRatio * (rangeEnd - rangeStart);
+    }
+    const vidDuration = video.duration;
+    if (!isFinite(vidDuration) || vidDuration <= 0) return null;
+    return clickRatio * vidDuration;
+  }, [isYouTube, duration]);
 
   const handleProgressMouseDown = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     e.stopPropagation();
     setIsDragging(true);
     const seekTime = getSeekTimeFromEvent(e.clientX);
-    if (seekTime !== null && videoRef.current) {
-      videoRef.current.currentTime = seekTime;
-      setCurrentTime(seekTime);
+    if (seekTime !== null) {
+      seekTo(seekTime);
     }
-  }, [getSeekTimeFromEvent]);
+  }, [getSeekTimeFromEvent, seekTo]);
 
   useEffect(() => {
     if (!isDragging) return;
 
     const handleMouseMove = (e: MouseEvent) => {
       const seekTime = getSeekTimeFromEvent(e.clientX);
-      if (seekTime !== null && videoRef.current) {
-        videoRef.current.currentTime = seekTime;
-        setCurrentTime(seekTime);
+      if (seekTime !== null) {
+        seekTo(seekTime);
       }
     };
 
@@ -495,7 +593,7 @@ function VideoPlayer({ src, poster, onReady, onError }: VideoPlayerProps) {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isDragging, getSeekTimeFromEvent]);
+  }, [isDragging, getSeekTimeFromEvent, seekTo]);
 
   // Quality change handler
   const handleQualityChange = (levelIndex: number) => {
@@ -526,78 +624,12 @@ function VideoPlayer({ src, poster, onReady, onError }: VideoPlayerProps) {
     setPlaying(p => !p);
   };
 
-  const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
-  const hasSeekableDuration = duration > 0;
-  const bufferedPercent = duration > 0 ? (buffered / duration) * 100 : 0;
+  const hasLiveSeekable = seekableEnd > seekableStart;
+  const effectiveDuration = hasLiveSeekable ? seekableEnd - seekableStart : (isFinite(duration) && duration > 0 ? duration : 0);
+  const effectiveCurrentTime = hasLiveSeekable ? currentTime - seekableStart : currentTime;
+  const progressPercent = effectiveDuration > 0 ? (effectiveCurrentTime / effectiveDuration) * 100 : 0;
+  const bufferedPercent = effectiveDuration > 0 ? (buffered / effectiveDuration) * 100 : 0;
 
-  // YouTube player wrapper controls
-  if (isYouTubeUrl(src)) {
-    return (
-      <div
-        ref={containerRef}
-        className="relative aspect-video w-full overflow-hidden rounded-2xl bg-black border border-border/40 shadow-2xl group"
-        onMouseMove={handleMouseMove}
-        onMouseLeave={handleMouseLeave}
-      >
-        {ambientGlow && (
-          <div className="ambient-glow-layer ambient-glow-pulse" />
-        )}
-
-        {isLoading && (
-          <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/70 backdrop-blur-sm">
-            <div className="flex flex-col items-center gap-3">
-              <Loader2 className="h-10 w-10 animate-spin text-primary" />
-              <span className="text-xs text-white/60 font-medium">Loading stream...</span>
-            </div>
-          </div>
-        )}
-        <ReactPlayer
-          url={src}
-          width="100%"
-          height="100%"
-          controls
-          playing={playing}
-          volume={volume}
-          muted={muted}
-          loop={settings.player?.loop ?? false}
-          config={{
-            youtube: {
-              playerVars: {
-                showinfo: 0,
-                modestbranding: 1,
-                rel: 0
-              }
-            }
-          }}
-          onReady={() => {
-            setIsLoading(false);
-            onReady?.();
-          }}
-          onBuffer={() => setIsLoading(true)}
-          onBufferEnd={() => setIsLoading(false)}
-          onError={() => {
-            setIsLoading(false);
-            onError?.('This YouTube stream is unavailable or blocked.');
-          }}
-        />
-
-        <div className="absolute top-4 right-4 z-20 flex gap-2 controls-overlay-element">
-          <button
-            onClick={() => setAmbientGlow(prev => !prev)}
-            className={cn(
-              "p-2 rounded-xl transition-all duration-300 shadow backdrop-blur-md border border-white/10",
-              ambientGlow ? "bg-primary text-primary-foreground" : "bg-black/60 text-white/80 hover:text-white"
-            )}
-            title="Toggle Ambient Glow"
-          >
-            <Sparkles className="h-4 w-4" />
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // === MODERN HLS CUSTOM PLAYER CONTROLS ===
   return (
     <div
       ref={containerRef}
@@ -622,24 +654,66 @@ function VideoPlayer({ src, poster, onReady, onError }: VideoPlayerProps) {
         </div>
       )}
 
-      <video
-        ref={videoRef}
-        className="h-full w-full bg-black object-contain"
-        poster={poster}
-        playsInline
-        autoPlay={playing}
-        muted={muted}
-        loop={settings.player?.loop ?? false}
-        preload="auto"
-      />
+      {isYouTube ? (
+        <div className="absolute inset-0">
+          <ReactPlayer
+            ref={playerRef}
+            url={src}
+            width="100%"
+            height="100%"
+            controls={false}
+            playing={playing}
+            volume={volume}
+            muted={muted}
+            loop={settings.player?.loop ?? false}
+            style={{ pointerEvents: 'none' }}
+            config={{
+                youtube: {
+                  playerVars: {
+                    showinfo: 0,
+                    modestbranding: 1,
+                    rel: 0,
+                    controls: 0,
+                    iv_load_policy: 3,
+                    fs: 0,
+                    disablekb: 1,
+                    autoplay: 0,
+                    playsinline: 1,
+                    origin: window.location.origin
+                  }
+                }
+            }}
+            onReady={handleYouTubeReady}
+            onProgress={handleYouTubeProgress}
+            onDuration={handleYouTubeDuration}
+            onBuffer={handleYouTubeBuffer}
+            onBufferEnd={handleYouTubeBufferEnd}
+            onError={handleYouTubeError}
+          />
+          <div className="absolute inset-0 z-10" />
+        </div>
+      ) : (
+        <>
+          <video
+            ref={videoRef}
+            className="h-full w-full bg-black object-contain"
+            poster={poster}
+            playsInline
+            autoPlay={playing}
+            muted={muted}
+            loop={settings.player?.loop ?? false}
+            preload="auto"
+          />
 
-      {/* Buffering state shown as a subtle pulse on the video */}
-      <div
-        className={cn(
-          "absolute inset-0 bg-white/0 pointer-events-none transition-all duration-500",
-          isLoading && "bg-white/[0.02]"
-        )}
-      />
+          {/* Buffering state shown as a subtle pulse on the video */}
+          <div
+            className={cn(
+              "absolute inset-0 bg-white/0 pointer-events-none transition-all duration-500",
+              isLoading && "bg-white/[0.02]"
+            )}
+          />
+        </>
+      )}
 
       {/* Modern custom controls overlay */}
       <div
@@ -660,11 +734,9 @@ function VideoPlayer({ src, poster, onReady, onError }: VideoPlayerProps) {
               <Radio className="h-3 w-3 animate-pulse" />
               LIVE
             </span>
-            {duration > 0 && (
-              <span className="text-[11px] text-white/70 font-mono bg-black/40 px-2 py-1 rounded-lg backdrop-blur-sm">
-                {formatTime(currentTime)}
-              </span>
-            )}
+            <span className="text-[11px] text-white/70 font-mono bg-black/40 px-2 py-1 rounded-lg backdrop-blur-sm">
+              {formatTime(effectiveCurrentTime)}
+            </span>
           </div>
 
           <div className="flex items-center gap-2">
@@ -748,39 +820,37 @@ function VideoPlayer({ src, poster, onReady, onError }: VideoPlayerProps) {
 
         {/* Bottom bar */}
         <div className="relative px-4 pb-4 pt-2 controls-overlay-element">
-          {/* Progress bar - fully draggable */}
-          {hasSeekableDuration && (
-            <div
-              ref={progressRef}
-              className={cn(
-                "group/progress mb-3 cursor-pointer",
-                isDragging && "cursor-grabbing"
-              )}
-              onClick={(e) => { e.stopPropagation(); handleSeek(e); }}
-              onMouseDown={handleProgressMouseDown}
-            >
-              <div className={cn(
-                "relative rounded-full bg-white/20 overflow-hidden transition-all duration-150",
-                isDragging ? "h-3" : "h-1.5 group-hover/progress:h-2.5"
-              )}>
-                {/* Buffered */}
-                <div
-                  className="absolute inset-y-0 left-0 bg-white/20 rounded-full transition-all duration-200"
-                  style={{ width: `${bufferedPercent}%` }}
-                />
-                {/* Progress */}
-                <div
-                  className="absolute inset-y-0 left-0 bg-primary rounded-full transition-all duration-200"
-                  style={{ width: `${progressPercent}%` }}
-                >
-                  <div className={cn(
-                    "absolute right-0 top-1/2 -translate-y-1/2 w-3.5 h-3.5 rounded-full bg-primary shadow-[0_0_10px_2px] shadow-primary/60 transition-all duration-150",
-                    isDragging ? "opacity-100 scale-110" : "opacity-0 group-hover/progress:opacity-100"
-                  )} />
-                </div>
+          {/* Progress bar - fully draggable, always visible like native controls */}
+          <div
+            ref={progressRef}
+            className={cn(
+              "group/progress mb-3 cursor-pointer",
+              isDragging && "cursor-grabbing"
+            )}
+            onClick={(e) => { e.stopPropagation(); handleSeek(e); }}
+            onMouseDown={handleProgressMouseDown}
+          >
+            <div className={cn(
+              "relative rounded-full bg-white/20 overflow-hidden transition-all duration-150",
+              isDragging ? "h-3" : "h-1.5 group-hover/progress:h-2.5"
+            )}>
+              {/* Buffered */}
+              <div
+                className="absolute inset-y-0 left-0 bg-white/20 rounded-full transition-all duration-200"
+                style={{ width: `${bufferedPercent}%` }}
+              />
+              {/* Progress */}
+              <div
+                className="absolute inset-y-0 left-0 bg-primary rounded-full transition-all duration-200"
+                style={{ width: `${progressPercent}%` }}
+              >
+                <div className={cn(
+                  "absolute right-0 top-1/2 -translate-y-1/2 w-3.5 h-3.5 rounded-full bg-primary shadow-[0_0_10px_2px] shadow-primary/60 transition-all duration-150",
+                  isDragging ? "opacity-100 scale-110" : "opacity-0 group-hover/progress:opacity-100"
+                )} />
               </div>
             </div>
-          )}
+          </div>
 
           <div className="flex items-center justify-between gap-4">
             {/* Left controls */}
@@ -796,7 +866,7 @@ function VideoPlayer({ src, poster, onReady, onError }: VideoPlayerProps) {
 
               {/* Skip 10s back */}
               <button
-                onClick={() => { if (videoRef.current) videoRef.current.currentTime = Math.max(videoRef.current.currentTime - 10, 0); }}
+                onClick={() => { const cur = isYouTube ? currentTime : (videoRef.current?.currentTime || 0); seekTo(Math.max(cur - 10, 0)); }}
                 className="p-1 text-white/70 hover:text-white hover:scale-110 transition-transform hidden sm:block"
                 title="Rewind 10s"
               >
@@ -805,7 +875,7 @@ function VideoPlayer({ src, poster, onReady, onError }: VideoPlayerProps) {
 
               {/* Skip 10s forward */}
               <button
-                onClick={() => { if (videoRef.current) videoRef.current.currentTime = Math.min(videoRef.current.currentTime + 10, videoRef.current.duration || Infinity); }}
+                onClick={() => { const cur = isYouTube ? currentTime : (videoRef.current?.currentTime || 0); const maxT = getMaxTime(); seekTo(Math.min(cur + 10, maxT)); }}
                 className="p-1 text-white/70 hover:text-white hover:scale-110 transition-transform hidden sm:block"
                 title="Forward 10s"
               >
@@ -840,11 +910,9 @@ function VideoPlayer({ src, poster, onReady, onError }: VideoPlayerProps) {
               </div>
 
               {/* Time display */}
-              {duration > 0 && (
-                <span className="text-[11px] text-white/70 font-mono hidden sm:block">
-                  {formatTime(currentTime)} / {formatTime(duration)}
-                </span>
-              )}
+              <span className="text-[11px] text-white/70 font-mono hidden sm:block">
+                {formatTime(effectiveCurrentTime)} / {formatTime(effectiveDuration)}
+              </span>
             </div>
 
             {/* Right controls */}
@@ -853,11 +921,11 @@ function VideoPlayer({ src, poster, onReady, onError }: VideoPlayerProps) {
               <div className="hidden lg:flex items-center gap-1 text-[10px] text-white/30 font-mono mr-1">
                 <kbd className="px-1 py-0.5 rounded bg-white/5">Space</kbd>
                 <kbd className="px-1 py-0.5 rounded bg-white/5">F</kbd>
-                <kbd className="px-1 py-0.5 rounded bg-white/5">P</kbd>
+                {!isYouTube && <kbd className="px-1 py-0.5 rounded bg-white/5">P</kbd>}
               </div>
 
-              {/* Picture-in-Picture */}
-              {document.pictureInPictureEnabled && (
+              {/* Picture-in-Picture - only available for HLS */}
+              {!isYouTube && document.pictureInPictureEnabled && (
                 <button
                   onClick={(e) => { e.stopPropagation(); togglePiP(); }}
                   className="p-1.5 text-white/70 hover:text-white hover:scale-110 transition-transform"

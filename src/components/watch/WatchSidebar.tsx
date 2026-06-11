@@ -7,12 +7,13 @@ import {
   Clock,
   ChevronDown,
   ChevronUp,
+  Globe,
+  Languages,
   FolderOpen,
   Music,
   Newspaper,
   Monitor,
   Gamepad2,
-  Globe,
   Film,
   Mic2,
 } from 'lucide-react';
@@ -22,22 +23,8 @@ import useStore from '../../store/useStore';
 interface WatchSidebarProps {
   channels: Channel[];
   categories: Category[];
-  currentChannelId: string;
+  currentChannel: Channel;
   relatedChannels: Channel[];
-}
-
-const categoryIcons: Record<string, React.ElementType> = {
-  news: Newspaper,
-  sports: Monitor,
-  music: Music,
-  entertainment: Film,
-  gaming: Gamepad2,
-  general: Globe,
-  talk: Mic2,
-};
-
-function getCategoryIcon(catId: string): React.ElementType {
-  return categoryIcons[catId.toLowerCase()] || FolderOpen;
 }
 
 /** YouTube-style compact suggestion item */
@@ -70,7 +57,6 @@ function SuggestionItem({
           : 'hover:bg-accent/40'
       }`}
     >
-      {/* Thumbnail - 16:9 like YouTube */}
       <div className="relative w-[168px] flex-shrink-0 aspect-video overflow-hidden rounded-lg bg-gradient-to-br from-slate-950 via-slate-900 to-primary/10 border border-border/30">
         {channel.logo && !imgErr ? (
           <img
@@ -87,24 +73,19 @@ function SuggestionItem({
             </div>
           </div>
         )}
-
-        {/* Now playing / active indicator */}
         {isActive && (
           <div className="absolute inset-0 bg-primary/30 flex items-center justify-center backdrop-brightness-75">
             <span className="flex items-center gap-1 rounded-md bg-black/80 px-2 py-0.5 text-[9px] font-bold text-white uppercase shadow-lg">
               <span className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse shadow-[0_0_4px_1px] shadow-green-500" />
-              Live
+              Now
             </span>
           </div>
         )}
-
-        {/* LIVE badge */}
         <div className="absolute bottom-1 right-1 rounded-sm bg-red-600 px-1 py-0.5 text-[9px] font-bold text-white leading-none">
           LIVE
         </div>
       </div>
 
-      {/* Info */}
       <div className="flex-1 min-w-0 pt-0.5">
         <p className={`text-sm font-semibold leading-tight line-clamp-2 ${
           isActive ? 'text-primary' : 'text-foreground'
@@ -123,6 +104,91 @@ function SuggestionItem({
         </div>
       </div>
     </motion.button>
+  );
+}
+
+const categoryIcons: Record<string, React.ElementType> = {
+  news: Newspaper,
+  sports: Monitor,
+  music: Music,
+  entertainment: Film,
+  gaming: Gamepad2,
+  general: Globe,
+  talk: Mic2,
+};
+
+function getCategoryIcon(catId: string): React.ElementType {
+  return categoryIcons[catId.toLowerCase()] || FolderOpen;
+}
+
+/** Collapsible suggestion section */
+function SuggestionSection({
+  label,
+  icon: Icon,
+  channels,
+  currentChannelId,
+  onChannelClick,
+  defaultExpanded,
+}: {
+  label: string;
+  icon: React.ElementType;
+  channels: Channel[];
+  currentChannelId: string;
+  onChannelClick: (id: string) => void;
+  defaultExpanded: boolean;
+}) {
+  const [expanded, setExpanded] = useState(defaultExpanded);
+
+  if (channels.length === 0) return null;
+
+  return (
+    <div className="rounded-xl border border-border/30 bg-card/20 overflow-hidden">
+      <button
+        type="button"
+        onClick={() => setExpanded(!expanded)}
+        className="flex w-full items-center justify-between gap-2 px-3 py-2.5 text-left transition-colors hover:bg-accent/40"
+      >
+        <div className="flex items-center gap-2 min-w-0">
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10 text-primary flex-shrink-0">
+            <Icon className="h-3.5 w-3.5" />
+          </div>
+          <span className="text-xs font-bold uppercase tracking-wider text-foreground truncate">
+            {label}
+          </span>
+          <span className="flex-shrink-0 rounded-full bg-primary/10 px-1.5 py-0.5 text-[9px] font-bold text-primary">
+            {channels.length}
+          </span>
+        </div>
+        {expanded ? (
+          <ChevronUp className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+        ) : (
+          <ChevronDown className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+        )}
+      </button>
+
+      <AnimatePresence initial={false}>
+        {expanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden border-t border-border/20"
+          >
+            <div className="p-2 space-y-0.5">
+              {channels.map((ch) => (
+                <SuggestionItem
+                  key={ch.id}
+                  channel={ch}
+                  isActive={ch.id === currentChannelId}
+                  onClick={() => onChannelClick(ch.id)}
+                />
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }
 
@@ -201,7 +267,7 @@ function CategoryFolder({
 export function WatchSidebar({
   channels,
   categories,
-  currentChannelId,
+  currentChannel,
   relatedChannels,
 }: WatchSidebarProps) {
   const navigate = useNavigate();
@@ -211,12 +277,16 @@ export function WatchSidebar({
     navigate(`/watch/${id}`);
   };
 
-  // Resolve favorites as full channel objects
-  const favoriteChannels = useMemo(() => {
-    return channels.filter((c) => settings.favorites.includes(c.id)).slice(0, 4);
-  }, [channels, settings.favorites]);
+  const currentChannelId = currentChannel.id;
 
-  // Resolve recently watched as full channel objects (excluding current)
+  // Resolve favorites (excluding current)
+  const favoriteChannels = useMemo(() => {
+    return channels
+      .filter((c) => settings.favorites.includes(c.id) && c.id !== currentChannelId)
+      .slice(0, 4);
+  }, [channels, settings.favorites, currentChannelId]);
+
+  // Resolve recently watched (excluding current)
   const recentChannels = useMemo(() => {
     if (!settings.watchHistory) return [];
     return settings.watchHistory
@@ -226,12 +296,34 @@ export function WatchSidebar({
       .slice(0, 4);
   }, [settings.watchHistory, channels, currentChannelId]);
 
-  // Group related channels by category (excluding current)
-  const channelsByCategory = useMemo(() => {
-    const map = new Map<string, Channel[]>();
-    const filtered = relatedChannels.filter((c) => c.id !== currentChannelId);
+  const currentLangs = currentChannel.languages || [];
 
-    for (const ch of filtered) {
+  // Group related channels by relevance: same language first, then same country, then others
+  const { sameLang, sameCountry, other } = useMemo(() => {
+    const sl: Channel[] = [];
+    const sc: Channel[] = [];
+    const ot: Channel[] = [];
+
+    for (const ch of relatedChannels) {
+      if (ch.id === currentChannelId) continue;
+      const chLangs = ch.languages || [];
+      const sharesLang = currentLangs.some((l) => chLangs.includes(l));
+      if (sharesLang) {
+        sl.push(ch);
+      } else if (ch.country === currentChannel.country) {
+        sc.push(ch);
+      } else {
+        ot.push(ch);
+      }
+    }
+    return { sameLang: sl, sameCountry: sc, other: ot };
+  }, [relatedChannels, currentChannelId, currentLangs, currentChannel.country]);
+
+  // Group all related channels (excluding current) by category for the category folders
+  const allByCategory = useMemo(() => {
+    const map = new Map<string, Channel[]>();
+    for (const ch of relatedChannels) {
+      if (ch.id === currentChannelId) continue;
       for (const catId of ch.categories) {
         const existing = map.get(catId) || [];
         if (!existing.find((x) => x.id === ch.id)) {
@@ -247,9 +339,11 @@ export function WatchSidebar({
     return categories.find((c) => c.id === catId)?.name || catId;
   };
 
+  const langLabel = currentChannel.languageNames?.[0] || currentLangs[0] || 'Same Language';
+  const countryLabel = currentChannel.countryName || currentChannel.country || 'Same Country';
+
   return (
     <aside className="space-y-4">
-      {/* Section title */}
       <div className="flex items-center gap-2 px-1">
         <Tv2 className="h-4 w-4 text-primary" />
         <h3 className="text-sm font-bold text-foreground">Suggestions</h3>
@@ -270,13 +364,7 @@ export function WatchSidebar({
           <div className="divide-y divide-border/10">
             {favoriteChannels.map((ch) => {
               const isActive = ch.id === currentChannelId;
-              const initials = ch.name
-                .split(/\s+/)
-                .slice(0, 2)
-                .map((w) => w[0])
-                .join('')
-                .toUpperCase();
-
+              const initials = ch.name.split(/\s+/).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
               return (
                 <button
                   key={ch.id}
@@ -294,7 +382,6 @@ export function WatchSidebar({
                         {initials || 'TV'}
                       </div>
                     )}
-                    {isActive && <div className="absolute inset-0 rounded-lg ring-2 ring-primary/60" />}
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className={`truncate text-sm font-semibold ${isActive ? 'text-primary' : 'text-foreground'}`}>
@@ -302,9 +389,6 @@ export function WatchSidebar({
                     </p>
                     <span className="text-[10px] text-muted-foreground">{ch.countryName || ch.country}</span>
                   </div>
-                  {isActive && (
-                    <span className="flex h-2 w-2 rounded-full bg-green-500 shadow-[0_0_4px_1px] shadow-green-500/60 flex-shrink-0" />
-                  )}
                 </button>
               );
             })}
@@ -327,13 +411,7 @@ export function WatchSidebar({
           <div className="divide-y divide-border/10">
             {recentChannels.map((ch) => {
               const isActive = ch.id === currentChannelId;
-              const initials = ch.name
-                .split(/\s+/)
-                .slice(0, 2)
-                .map((w) => w[0])
-                .join('')
-                .toUpperCase();
-
+              const initials = ch.name.split(/\s+/).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
               return (
                 <button
                   key={ch.id}
@@ -365,10 +443,30 @@ export function WatchSidebar({
         </div>
       )}
 
-      {/* Category Folders */}
-      {channelsByCategory.size > 0 && (
+      {/* Language-based suggestions */}
+      <SuggestionSection
+        label={langLabel}
+        icon={Languages}
+        channels={sameLang}
+        currentChannelId={currentChannelId}
+        onChannelClick={handleChannelClick}
+        defaultExpanded={true}
+      />
+
+      {/* Same country suggestions */}
+      <SuggestionSection
+        label={countryLabel}
+        icon={Globe}
+        channels={sameCountry}
+        currentChannelId={currentChannelId}
+        onChannelClick={handleChannelClick}
+        defaultExpanded={sameLang.length === 0}
+      />
+
+      {/* Category folders — includes English and all related channels */}
+      {allByCategory.size > 0 && (
         <div className="space-y-2.5">
-          {Array.from(channelsByCategory.entries()).map(([catId, catChannels]) => (
+          {Array.from(allByCategory.entries()).map(([catId, catChannels]) => (
             <CategoryFolder
               key={catId}
               categoryId={catId}
@@ -383,7 +481,7 @@ export function WatchSidebar({
       )}
 
       {/* Empty state */}
-      {channelsByCategory.size === 0 && favoriteChannels.length === 0 && recentChannels.length === 0 && (
+      {sameLang.length === 0 && sameCountry.length === 0 && other.length === 0 && favoriteChannels.length === 0 && recentChannels.length === 0 && (
         <div className="flex flex-col items-center justify-center py-10 px-4 rounded-xl border border-dashed border-border/30 bg-card/10">
           <Tv2 className="h-7 w-7 text-muted-foreground/30 mb-2" />
           <p className="text-xs font-medium text-muted-foreground text-center">
