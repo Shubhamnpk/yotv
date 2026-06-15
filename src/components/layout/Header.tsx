@@ -2,6 +2,7 @@ import { Menu, Search } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import SimpleSearch from '../search/SimpleSearch';
 import Settings from '../Settings';
+import MobileSettings from '../MobileSettings';
 import Logo from '../Logo';
 import type { Category, Language } from '../../types';
 
@@ -32,7 +33,7 @@ export function Header({
             <button
               type="button"
               onClick={onMobileMenuOpen}
-              className="flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-card text-muted-foreground transition hover:text-foreground md:hidden"
+              className="flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-card text-muted-foreground transition hover:text-foreground lg:hidden"
               aria-label="Open menu"
             >
               <Menu className="h-5 w-5" />
@@ -40,20 +41,20 @@ export function Header({
             <Logo />
           </div>
 
-          <div className="hidden flex-1 items-center justify-end gap-4 md:flex">
+          <div className="hidden flex-1 items-center justify-end gap-4 lg:flex">
             <SimpleSearch
               value={searchQuery}
               onChange={onSearch}
               className="w-full max-w-lg"
               placeholder="Search channels..."
             />
-            <Link to="/about" className="hidden lg:inline-flex text-xs text-muted-foreground hover:text-foreground transition-colors">
+            <Link to="/about" className="hidden xl:inline-flex text-xs text-muted-foreground hover:text-foreground transition-colors">
               About
             </Link>
             <Settings languages={languages} countries={countries} categories={categories} />
           </div>
 
-          <div className="flex items-center gap-2 md:hidden">
+          <div className="flex items-center gap-2 lg:hidden">
             <button
               type="button"
               onClick={onMobileSearchOpen}
@@ -62,7 +63,7 @@ export function Header({
             >
               <Search className="h-5 w-5" />
             </button>
-            <Settings languages={languages} countries={countries} categories={categories} />
+            <MobileSettings languages={languages} countries={countries} categories={categories} />
           </div>
         </div>
       </div>

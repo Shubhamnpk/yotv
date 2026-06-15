@@ -7,7 +7,6 @@ import {
   Radio,
   RotateCcw,
   Loader2,
-  Globe,
   ExternalLink,
   Info,
   ChevronDown,
@@ -15,12 +14,11 @@ import {
   Signal,
   Youtube,
   Wifi,
-  ThumbsUp,
 } from 'lucide-react';
 
 import VideoPlayer from '../VideoPlayer';
 import type { Channel, Stream } from '../../types';
-import { isYouTubeUrl } from '../../utils/streamUtils';
+import { isYouTubeUrl, isDashUrl } from '../../utils/streamUtils';
 import { useData } from '../../context/DataContext';
 
 interface PlayerSectionProps {
@@ -117,7 +115,7 @@ export function PlayerSection({ channel, stream, streams, onBack }: PlayerSectio
     setRetryCount((c) => c + 1);
   };
 
-  const streamType = isYouTubeUrl(activeStream.url) ? 'YouTube' : 'HLS';
+  const streamType = isYouTubeUrl(activeStream.url) ? 'YouTube' : isDashUrl(activeStream.url) ? 'DASH' : 'HLS';
   const launchedYear = channel.launched ? new Date(channel.launched).getFullYear() : null;
 
   // Sort streams: YouTube first then HLS
@@ -187,6 +185,7 @@ export function PlayerSection({ channel, stream, streams, onBack }: PlayerSectio
                 poster={channel.logo}
                 onReady={handlePlayerReady}
                 onError={handlePlayerError}
+                drmConfig={activeStream.drm}
               />
             </Suspense>
 
@@ -204,13 +203,7 @@ export function PlayerSection({ channel, stream, streams, onBack }: PlayerSectio
               </div>
             )}
 
-            {/* Status overlay when connected */}
-            {isReady && (
-              <div className="absolute top-3 left-3 flex items-center gap-1.5 rounded-md bg-black/60 px-2 py-1 backdrop-blur-sm">
-                <span className="h-2 w-2 rounded-full bg-green-500 shadow-[0_0_6px_2px] shadow-green-500/60 animate-pulse" />
-                <span className="text-[10px] font-bold text-white uppercase tracking-wider">LIVE</span>
-              </div>
-            )}
+
           </div>
         )}
       </div>
@@ -283,7 +276,8 @@ export function PlayerSection({ channel, stream, streams, onBack }: PlayerSectio
                     {sortedStreamOptions.map((option, index) => {
                       const isActive = index === activeStreamIndex;
                       const isYT = isYouTubeUrl(option.url);
-                      const qualityLabel = option.quality ? option.quality.toUpperCase() : isYT ? 'Auto' : 'HLS';
+                      const isDASH = isDashUrl(option.url);
+                      const qualityLabel = option.quality ? option.quality.toUpperCase() : isYT ? 'Auto' : isDASH ? 'DASH' : 'HLS';
 
                       return (
                         <button
@@ -314,9 +308,9 @@ export function PlayerSection({ channel, stream, streams, onBack }: PlayerSectio
                             </p>
                             <div className="flex items-center gap-1">
                               <span className="text-[9px] font-medium text-muted-foreground uppercase">
-                                {isYT ? 'YouTube' : 'HLS'}
+                                {isYT ? 'YouTube' : isDASH ? 'DASH' : 'HLS'}
                               </span>
-                              {qualityLabel !== 'HLS' && qualityLabel !== 'Auto' && (
+                              {qualityLabel !== 'HLS' && qualityLabel !== 'Auto' && qualityLabel !== 'DASH' && (
                                 <>
                                   <span className="text-muted-foreground/40">·</span>
                                   <span className="text-[9px] font-bold text-primary/80 uppercase">{qualityLabel}</span>

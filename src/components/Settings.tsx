@@ -17,11 +17,22 @@ import {
   Hash,
   Sparkles,
   Check,
+  Info,
+  Star,
+  Music,
+  Radio,
+  TrendingUp,
+  ExternalLink,
+  Github,
+  Globe,
+  Code2,
+  Zap,
 } from 'lucide-react';
 import useStore from '../store/useStore';
 import { cn } from '../utils/cn';
 import WatchHistory from './WatchHistory';
 import { applyTheme, watchSystemTheme } from '../utils/themeUtils';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from './ui/Card';
 
 const PreferenceSelector = lazy(() => import('./PreferenceSelector'));
 
@@ -141,6 +152,7 @@ export default function Settings({
     { id: 'playback', icon: Play, label: 'Playback' },
     { id: 'preferences', icon: Heart, label: 'Preferences' },
     { id: 'history', icon: History, label: 'History' },
+    { id: 'about', icon: Info, label: 'About' },
   ];
 
   const handleThemeChange = (
@@ -230,9 +242,9 @@ export default function Settings({
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: 24 }}
                 transition={{ duration: 0.25, ease: 'easeOut' }}
-                className="fixed left-1/2 top-1/2 z-50 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl mx-4 focus:outline-none"
+                className="fixed left-1/2 top-1/2 z-50 -translate-x-1/2 -translate-y-1/2 w-full h-screen sm:h-auto sm:max-w-2xl mx-4 sm:rounded-2xl rounded-none focus:outline-none"
               >
-                <div className="bg-card/95 backdrop-blur-xl rounded-2xl border border-border/60 shadow-2xl overflow-hidden">
+                <div className="bg-card/95 backdrop-blur-xl w-full h-full sm:h-auto sm:rounded-2xl rounded-none border border-border/60 shadow-2xl overflow-hidden flex flex-col">
 
                   {/* Header */}
                   <div className="flex items-center justify-between px-6 py-4 border-b border-border/50 bg-gradient-to-r from-primary/5 to-transparent">
@@ -277,7 +289,7 @@ export default function Settings({
                       ))}
                     </Tabs.List>
 
-                    <div className="h-[55vh] overflow-y-auto px-6 py-5 space-y-6">
+                    <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-5 space-y-6 sm:h-[55vh]">
 
                       {/* ── APPEARANCE ── */}
                       <Tabs.Content value="appearance" className="focus:outline-none space-y-6">
@@ -498,6 +510,250 @@ export default function Settings({
                       {/* ── HISTORY ── */}
                       <Tabs.Content value="history" className="focus:outline-none">
                         <WatchHistory />
+                      </Tabs.Content>
+
+                      {/* ── ABOUT ── */}
+                      <Tabs.Content value="about" className="focus:outline-none space-y-6">
+                        {/* App Header */}
+                        <div className="relative overflow-hidden rounded-2xl border border-border/50 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-6">
+                          <div className="relative z-10">
+                            <div className="flex items-start justify-between mb-4">
+                              <div>
+                                <h2 className="text-3xl font-bold bg-gradient-to-r from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent mb-2">
+                                  YoGuru TV
+                                </h2>
+                                <p className="text-sm text-muted-foreground max-w-md">
+                                  A modern, feature-rich IPTV streaming application with advanced search, multi-language support, and 13+ beautiful themes.
+                                </p>
+                              </div>
+                              <div className="flex flex-col items-end gap-2">
+                                <span className="px-3 py-1 rounded-full bg-primary/20 border border-primary/40 text-xs font-semibold text-primary">
+                                  v2.1.0
+                                </span>
+                                <span className="hidden sm:inline px-3 py-1 rounded-full bg-primary/10 border border-primary/30 text-xs font-medium text-muted-foreground">
+                                  {new Date().toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="absolute top-0 right-0 w-40 h-40 bg-primary/5 rounded-full blur-3xl -z-0" />
+                        </div>
+
+                        {/* Creator Info */}
+                        <Card className="border-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/5">
+                          <CardHeader className="pb-3">
+                            <CardTitle className="flex items-center gap-2 text-lg">
+                              <Globe className="w-5 h-5 text-primary" />
+                              Made with ❤️
+                            </CardTitle>
+                            <CardDescription>Crafted by Shubham Nepali</CardDescription>
+                          </CardHeader>
+                          <CardContent className="space-y-4">
+                            <p className="text-sm text-muted-foreground leading-relaxed">
+                              A passionate developer creating elegant digital experiences. This project showcases modern web technologies and thoughtful UI/UX design.
+                            </p>
+                            <div className="flex gap-2 flex-wrap">
+                              <a
+                                href="https://github.com/shubhamnpk"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary/10 hover:bg-primary/20 border border-primary/30 hover:border-primary/50 transition-all duration-300 text-sm font-medium text-primary hover:text-primary"
+                              >
+                                <Github className="w-4 h-4" />
+                                GitHub
+                              </a>
+                              <a
+                                href="https://shubhamnpk.github.io"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary/10 hover:bg-primary/20 border border-primary/30 hover:border-primary/50 transition-all duration-300 text-sm font-medium text-primary hover:text-primary"
+                              >
+                                <Globe className="w-4 h-4" />
+                                Portfolio
+                              </a>
+                            </div>
+                          </CardContent>
+                        </Card>
+
+                        {/* Tech Stack */}
+                        <Card className="border-0 bg-gradient-to-br from-blue/5 via-transparent to-blue/5">
+                          <CardHeader className="pb-3">
+                            <CardTitle className="flex items-center gap-2 text-lg">
+                              <Code2 className="w-5 h-5 text-blue-500" />
+                              Built With
+                            </CardTitle>
+                            <CardDescription>Modern technologies powering YoTV</CardDescription>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                              {[
+                                { name: 'React', icon: '⚛️' },
+                                { name: 'TypeScript', icon: '📘' },
+                                { name: 'Vite', icon: '⚡' },
+                                { name: 'Tailwind CSS', icon: '🎨' },
+                                { name: 'Framer Motion', icon: '✨' },
+                                { name: 'Zustand', icon: '🏪' },
+                              ].map((tech) => (
+                                <div
+                                  key={tech.name}
+                                  className="flex items-center gap-2 p-3 rounded-lg bg-card/40 border border-border/40 hover:border-primary/30 hover:bg-card/60 transition-all"
+                                >
+                                  <span className="text-xl">{tech.icon}</span>
+                                  <span className="text-xs font-medium text-muted-foreground">{tech.name}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </CardContent>
+                        </Card>
+
+                        {/* Features Highlights */}
+                        <Card className="border-0 bg-gradient-to-br from-amber/5 via-transparent to-amber/5">
+                          <CardHeader className="pb-3">
+                            <CardTitle className="flex items-center gap-2 text-lg">
+                              <Zap className="w-5 h-5 text-amber-500" />
+                              Key Features
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                              {[
+                                '🎬 High-Quality IPTV Streaming',
+                                '🔍 Advanced Search with Voice',
+                                '❤️ Favorites & Watch History',
+                                '🌍 Multi-Language Support',
+                                '🎨 13+ Beautiful Themes',
+                                '📱 Mobile Responsive Design',
+                                '⚙️ Granular Settings Control',
+                                '⌨️ Full Keyboard Navigation',
+                              ].map((feature) => (
+                                <div key={feature} className="flex items-center gap-2 text-sm text-muted-foreground">
+                                  <span className="text-lg">{feature.substring(0, 1)}</span>
+                                  <span>{feature.substring(2)}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </CardContent>
+                        </Card>
+
+                        {/* The Yo Family */}
+                        <Card className="border-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/5">
+                          <CardHeader className="pb-3">
+                            <CardTitle className="flex items-center gap-2 text-lg">
+                              <Star className="w-5 h-5 text-primary" />
+                              The Yo Family
+                            </CardTitle>
+                            <CardDescription>Explore our elegant ecosystem</CardDescription>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                              {/* YoMusic Card */}
+                              <a
+                                href="https://theyomusic.vercel.app/"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="group relative border border-primary/20 rounded-xl p-4 bg-gradient-to-br from-primary/10 to-transparent hover:from-primary/20 hover:to-primary/5 hover:border-primary/40 transition-all duration-300 overflow-hidden"
+                              >
+                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-full group-hover:translate-x-0 transition-transform duration-500" />
+                                <div className="relative">
+                                  <div className="flex items-start gap-3 mb-3">
+                                    <div className="w-10 h-10 bg-gradient-to-br from-primary/40 to-primary/20 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:shadow-lg transition-shadow duration-300">
+                                      <Music className="w-5 h-5 text-primary" />
+                                    </div>
+                                    <div className="flex-1">
+                                      <h3 className="font-bold text-sm text-foreground group-hover:text-primary transition-colors duration-300">YoMusic</h3>
+                                      <p className="text-xs text-muted-foreground">Music Streaming</p>
+                                    </div>
+                                  </div>
+                                  <p className="text-xs text-muted-foreground mb-3 leading-relaxed">
+                                    Stream songs, albums, artists and playlists
+                                  </p>
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex gap-1">
+                                      <div className="w-1.5 h-1.5 bg-primary/60 rounded-full" />
+                                      <div className="w-1.5 h-1.5 bg-primary/40 rounded-full" />
+                                      <div className="w-1.5 h-1.5 bg-primary/20 rounded-full" />
+                                    </div>
+                                    <ExternalLink className="w-3.5 h-3.5 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all duration-300 flex-shrink-0" />
+                                  </div>
+                                </div>
+                              </a>
+
+                              {/* YoRadio Card */}
+                              <a
+                                href="https://shubhamnpk.github.io/yoradio/"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="group relative border border-primary/20 rounded-xl p-4 bg-gradient-to-br from-primary/10 to-transparent hover:from-primary/20 hover:to-primary/5 hover:border-primary/40 transition-all duration-300 overflow-hidden"
+                              >
+                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-full group-hover:translate-x-0 transition-transform duration-500" />
+                                <div className="relative">
+                                  <div className="flex items-start gap-3 mb-3">
+                                    <div className="w-10 h-10 bg-gradient-to-br from-primary/40 to-primary/20 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:shadow-lg transition-shadow duration-300">
+                                      <Radio className="w-5 h-5 text-primary" />
+                                    </div>
+                                    <div className="flex-1">
+                                      <h3 className="font-bold text-sm text-foreground group-hover:text-primary transition-colors duration-300">YoRadio</h3>
+                                      <p className="text-xs text-muted-foreground">Online Radio</p>
+                                    </div>
+                                  </div>
+                                  <p className="text-xs text-muted-foreground mb-3 leading-relaxed">
+                                    Stream your favorite radio stations
+                                  </p>
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex gap-1">
+                                      <div className="w-1.5 h-1.5 bg-primary/60 rounded-full" />
+                                      <div className="w-1.5 h-1.5 bg-primary/40 rounded-full" />
+                                      <div className="w-1.5 h-1.5 bg-primary/20 rounded-full" />
+                                    </div>
+                                    <ExternalLink className="w-3.5 h-3.5 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all duration-300 flex-shrink-0" />
+                                  </div>
+                                </div>
+                              </a>
+
+                              {/* YoNepse Card */}
+                              <a
+                                href="https://shubhamnpk.github.io/yonepse/"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="group relative border border-primary/20 rounded-xl p-4 bg-gradient-to-br from-primary/10 to-transparent hover:from-primary/20 hover:to-primary/5 hover:border-primary/40 transition-all duration-300 overflow-hidden"
+                              >
+                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-full group-hover:translate-x-0 transition-transform duration-500" />
+                                <div className="relative">
+                                  <div className="flex items-start gap-3 mb-3">
+                                    <div className="w-10 h-10 bg-gradient-to-br from-primary/40 to-primary/20 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:shadow-lg transition-shadow duration-300">
+                                      <TrendingUp className="w-5 h-5 text-primary" />
+                                    </div>
+                                    <div className="flex-1">
+                                      <h3 className="font-bold text-sm text-foreground group-hover:text-primary transition-colors duration-300">YoNepse</h3>
+                                      <p className="text-xs text-muted-foreground">Stock Exchange</p>
+                                    </div>
+                                  </div>
+                                  <p className="text-xs text-muted-foreground mb-3 leading-relaxed">
+                                    Real-time Nepal stock market insights
+                                  </p>
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex gap-1">
+                                      <div className="w-1.5 h-1.5 bg-primary/60 rounded-full" />
+                                      <div className="w-1.5 h-1.5 bg-primary/40 rounded-full" />
+                                      <div className="w-1.5 h-1.5 bg-primary/20 rounded-full" />
+                                    </div>
+                                    <ExternalLink className="w-3.5 h-3.5 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all duration-300 flex-shrink-0" />
+                                  </div>
+                                </div>
+                              </a>
+                            </div>
+                          </CardContent>
+                        </Card>
+
+                        {/* Footer */}
+                        <div className="text-center pt-2 pb-4">
+                          <p className="text-xs text-muted-foreground">
+                            © 2024 YoGuru TV. Licensed under MIT.
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-2">
+                            Made with passion for better streaming experience
+                          </p>
+                        </div>
                       </Tabs.Content>
                     </div>
                   </Tabs.Root>

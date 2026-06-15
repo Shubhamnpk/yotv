@@ -51,6 +51,9 @@ export interface Stream {
   referrer: string | null;
   user_agent: string | null;
   quality: string | null;
+  drm?: {
+    clearKeys?: Record<string, string>;
+  };
 }
 
 // Guide interface based on https://iptv-org.github.io/api/guides.json

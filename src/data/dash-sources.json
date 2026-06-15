@@ -1,0 +1,45 @@
+{
+  "sources": [
+    {
+      "id": "dash-fifa",
+      "lang": "English",
+      "country": "World",
+      "country_code": "INT",
+      "name": "FIFA 2026",
+      "img": "https://toppng.com/uploads/preview/fifa-reveals-2026-world-cup-brand-logo-11717899905odpvrys9vo.webp",
+      "categories": ["sports"],
+      "streams": [
+        {
+          "title": "english World Cup TV",
+          "url": "https://qp-pldt-live-bpk-ucd-prod.akamaized.net/bpk-tv/ch299/default/index.mpd",
+          "quality": "HD",
+          "drm": {
+            "clearKeys": {
+              "549ab7cd35a64bb6bb479ecead04d69d": "829799ed534d11fcadeb4b192467e050"
+            }
+          }
+        },
+        {
+          "title": "M6 France HD",
+          "url": "https://origin-m6web.live.6cloud.fr/out/v1/6play/6play-m6/cmaf_cenc00/dash-short-hd.mpd",
+          "quality": "HD",
+          "drm": {
+            "clearKeys": {
+              "433ffba670963e70857859a9dff4be04": "51ede3a821229fe81e71282c8eff80e3"
+            }
+          }
+        },
+        {
+          "title": "Sport TV",
+          "url": "https://a151aivottlinear-a.akamaihd.net/OTTB/sin-nitro/live/dash/enc/m7duvnk2bu/out/v1/d1ad69118b5647309b1eb7213affdb3d/cenc.mpd",
+          "quality": "HD",
+          "drm": {
+            "clearKeys": {
+              "4bbcff3289d457b4dd5dbdd21221de9a": "c4906b9a9f8dda3c0725bddb8c497733"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

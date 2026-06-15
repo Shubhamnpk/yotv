@@ -38,6 +38,9 @@ importers:
       react-router-dom:
         specifier: ^7.9.1
         version: 7.17.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      shaka-player:
+        specifier: ^5.1.9
+        version: 5.1.9
       tailwind-merge:
         specifier: ^2.2.1
         version: 2.6.1
@@ -1573,6 +1576,10 @@ packages:
 
   set-cookie-parser@2.7.2:
     resolution: {integrity: sha512-oeM1lpU/UvhTxw+g3cIfxXHyJRc/uidd3yK1P242gzHds0udQBYzs3y8j4gCCW+ZJ7ad0yctld8RYO+bdurlvw==}
+
+  shaka-player@5.1.9:
+    resolution: {integrity: sha512-6lMQMZNM8s2bKag9za5IGLotEx7nAALNDuCX8aEz/zEBzKVyXR69VHLzRzwbKqNrQgh8g8WM73Mdk/YZfdx2nw==}
+    engines: {node: '>=18'}
 
   shebang-command@2.0.0:
     resolution: {integrity: sha512-kHxr2zZpYtdmrN1qDjrrX/Z1rR1kG8Dx+gkpK1G4eXmvXswmcE1hTWBWYUzlraYw1/yZp6YuDY77YtvbN0dmDA==}
@@ -3149,6 +3156,8 @@ snapshots:
   semver@7.8.3: {}
 
   set-cookie-parser@2.7.2: {}
+
+  shaka-player@5.1.9: {}
 
   shebang-command@2.0.0:
     dependencies:

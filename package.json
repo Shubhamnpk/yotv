@@ -20,6 +20,7 @@
     "react-dom": "^18.2.0",
     "react-player": "^2.14.1",
     "react-router-dom": "^7.9.1",
+    "shaka-player": "^5.1.9",
     "tailwind-merge": "^2.2.1",
     "zustand": "^4.5.0"
   },
@@ -43,6 +44,8 @@
   },
   "packageManager": "pnpm@10.0.0+sha512.b8fef5494bd3fe4cbd4edabd0745df2ee5be3e4b0b8b08fa643aa3e4c6702ccc0f00d68fa8a8c9858a735a0032485a44990ed2810526c875e416f001b17df12b",
   "pnpm": {
-    "onlyBuiltDependencies": ["esbuild"]
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
   }
 }

@@ -13,6 +13,7 @@ import { filterChannels } from '../hooks/useSearchSuggestions';
 import useStore from '../store/useStore';
 import { applyTheme } from '../utils/themeUtils';
 import youtubeSourcesData from '../data/youtube-sources.json';
+import dashSourcesData from '../data/dash-sources.json';
 
 interface DataContextValue {
   channels: Channel[];
@@ -198,8 +199,42 @@ export function DataProvider({ children }: { children: ReactNode }) {
           quality: null,
         }));
 
-        setChannels([...apiChannels, ...youtubeChannels]);
-        setStreams([...apiStreams, ...youtubeStreams]);
+        const dashChannels = dashSourcesData.sources.map((source) => {
+          const countryCode = countryNameToCode.get(source.country) || source.country_code || source.country;
+          const countryName = countryCodeToName.get(countryCode.toUpperCase()) || source.country;
+          return {
+            id: source.id,
+            name: source.name,
+            country: countryCode,
+            countryName,
+            languages: [source.lang.toLowerCase()],
+            languageNames: [source.lang],
+            categories: source.categories,
+            logo: source.img,
+          };
+        });
+
+        const dashStreams: Stream[] = dashSourcesData.sources.flatMap((source) => {
+          const streams = source.streams || [{
+            url: source.url,
+            quality: null,
+            drm: source.drm,
+            title: source.name,
+          }];
+          return streams.map((s: { title: string; url: string; quality: string | null; drm?: { clearKeys?: Record<string, string> } }) => ({
+            channel: source.id,
+            feed: null,
+            title: s.title,
+            url: s.url,
+            referrer: null,
+            user_agent: null,
+            quality: s.quality || null,
+            drm: s.drm,
+          }));
+        });
+
+        setChannels([...apiChannels, ...youtubeChannels, ...dashChannels]);
+        setStreams([...apiStreams, ...youtubeStreams, ...dashStreams]);
         setCategories(categoriesData);
         setLanguages(languagesData);
         setCountries(countriesData);

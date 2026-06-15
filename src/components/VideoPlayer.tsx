@@ -1,6 +1,7 @@
 import { memo, useEffect, useRef, useState, useCallback } from 'react';
 import Hls from 'hls.js';
 import ReactPlayer from 'react-player/lazy';
+import shaka from 'shaka-player';
 import {
   Play,
   Pause,
@@ -17,7 +18,7 @@ import {
   SkipForward,
   SkipBack,
 } from 'lucide-react';
-import { isYouTubeUrl } from '../utils/streamUtils';
+import { isYouTubeUrl, isDashUrl } from '../utils/streamUtils';
 import useStore from '../store/useStore';
 import { cn } from '../utils/cn';
 
@@ -26,6 +27,9 @@ interface VideoPlayerProps {
   poster?: string;
   onReady?: () => void;
   onError?: (message: string) => void;
+  drmConfig?: {
+    clearKeys?: Record<string, string>;
+  };
 }
 
 const qualityHeightMap = {
@@ -49,7 +53,7 @@ function formatTime(seconds: number): string {
   return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
-function VideoPlayer({ src, poster, onReady, onError }: VideoPlayerProps) {
+function VideoPlayer({ src, poster, onReady, onError, drmConfig }: VideoPlayerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const playerRef = useRef<ReactPlayer>(null);
@@ -73,9 +77,12 @@ function VideoPlayer({ src, poster, onReady, onError }: VideoPlayerProps) {
   const [availableQualities, setAvailableQualities] = useState<{ height: number; index: number; name: string }[]>([]);
   const [currentQuality, setCurrentQuality] = useState<number>(-1); // -1 = auto
   const hlsRef = useRef<Hls | null>(null);
+  const shakaRef = useRef<shaka.Player | null>(null);
   const progressIntervalRef = useRef<number | null>(null);
   const isYouTube = isYouTubeUrl(src);
+  const isDASH = !isYouTube && isDashUrl(src);
   const lastPauseTimeRef = useRef(0);
+  const [dashQualities, setDashQualities] = useState<{ label: string; bitrate: number }[]>([]);
   const wasPlayingRef = useRef(playing);
 
   const seekTo = useCallback((seconds: number) => {
@@ -299,7 +306,7 @@ function VideoPlayer({ src, poster, onReady, onError }: VideoPlayerProps) {
 
   // HLS stream logic
   useEffect(() => {
-    if (!videoRef.current || isYouTube) return;
+    if (!videoRef.current || isYouTube || isDASH) return;
 
     const video = videoRef.current;
     let hls: Hls | null = null;
@@ -495,6 +502,103 @@ function VideoPlayer({ src, poster, onReady, onError }: VideoPlayerProps) {
     };
   }, [onError, onReady, settings.player?.quality, src, startProgressTracking]);
 
+  // DASH stream logic via Shaka Player
+  useEffect(() => {
+    if (!videoRef.current || !isDASH) return;
+
+    const video = videoRef.current;
+    let destroyed = false;
+    setIsLoading(true);
+
+    const initShaka = async () => {
+      try {
+        if (!shaka.Player.isBrowserSupported()) {
+          onError?.('DASH playback is not supported in this browser.');
+          return;
+        }
+
+        const player = new shaka.Player();
+        shakaRef.current = player;
+        player.attach(video);
+
+        // Configure DRM if provided
+        if (drmConfig?.clearKeys) {
+          player.configure({
+            drm: {
+              clearKeys: drmConfig.clearKeys,
+            },
+          });
+        }
+
+        player.configure({
+          streaming: {
+            bufferingGoal: 15,
+            rebufferingGoal: 5,
+            jumpLargeGaps: true,
+          },
+        });
+
+        await player.load(src);
+
+        if (destroyed) return;
+
+        setIsLoading(false);
+        onReady?.();
+
+        const d = video.duration;
+        setDuration(isFinite(d) && d > 0 ? d : 0);
+
+        // Build quality menu from available tracks
+        const tracks = player.getVariantTracks();
+        if (tracks.length > 0) {
+          const seen = new Set<number>();
+          const uniqueTracks = tracks
+            .filter((t) => {
+              if (seen.has(t.height)) return false;
+              seen.add(t.height);
+              return true;
+            })
+            .sort((a, b) => b.height - a.height)
+            .map((t) => ({
+              label: t.height >= 1080 ? '1080p' :
+                     t.height >= 720 ? '720p' :
+                     t.height >= 540 ? '540p' :
+                     t.height >= 480 ? '480p' :
+                     t.height >= 360 ? '360p' :
+                     t.height >= 240 ? '240p' :
+                     t.height >= 144 ? '144p' :
+                     `${t.height}p`,
+              bitrate: t.height,
+            }));
+          setDashQualities(uniqueTracks);
+        }
+
+        startProgressTracking();
+
+        if (playingRef.current) {
+          video.play().catch(() => {});
+        }
+      } catch (err) {
+        if (destroyed) return;
+        setIsLoading(false);
+        onError?.('This DASH stream could not be played.');
+      }
+    };
+
+    initShaka();
+
+    return () => {
+      destroyed = true;
+      if (shakaRef.current) {
+        shakaRef.current.destroy();
+        shakaRef.current = null;
+      }
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current);
+      }
+    };
+  }, [src, isDASH, drmConfig, onReady, onError, startProgressTracking]);
+
   // Sync state with HTML5 video element
   useEffect(() => {
     if (!videoRef.current || isYouTube) return;
@@ -521,7 +625,7 @@ function VideoPlayer({ src, poster, onReady, onError }: VideoPlayerProps) {
     } else {
       video.pause();
     }
-  }, [playing, isYouTube]);
+  }, [playing, isYouTube, isDASH]);
 
   // Seek handler - uses live video properties at seek time, not stale state
   const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -616,6 +720,20 @@ function VideoPlayer({ src, poster, onReady, onError }: VideoPlayerProps) {
     if (hlsRef.current) {
       hlsRef.current.currentLevel = levelIndex;
       setCurrentQuality(levelIndex);
+    } else if (shakaRef.current && isDASH) {
+      const tracks = shakaRef.current.getVariantTracks();
+      const sorted = [...tracks].sort((a, b) => b.height - a.height);
+      const seen = new Set<number>();
+      const unique = sorted.filter((t) => {
+        if (seen.has(t.height)) return false;
+        seen.add(t.height);
+        return true;
+      });
+      const track = unique[levelIndex];
+      if (track) {
+        shakaRef.current.selectVariantTrack(track, true);
+        setCurrentQuality(levelIndex);
+      }
     }
     setShowQualityMenu(false);
   };
@@ -623,6 +741,11 @@ function VideoPlayer({ src, poster, onReady, onError }: VideoPlayerProps) {
   const handleAutoQuality = () => {
     if (hlsRef.current) {
       hlsRef.current.currentLevel = -1;
+      setCurrentQuality(-1);
+    } else if (shakaRef.current && isDASH) {
+      shakaRef.current.configure({
+        abr: { enabled: true },
+      });
       setCurrentQuality(-1);
     }
     setShowQualityMenu(false);
@@ -750,14 +873,11 @@ function VideoPlayer({ src, poster, onReady, onError }: VideoPlayerProps) {
               <Radio className="h-3 w-3 animate-pulse" />
               LIVE
             </span>
-            <span className="text-[11px] text-white/70 font-mono bg-black/40 px-2 py-1 rounded-lg backdrop-blur-sm">
-              {formatTime(effectiveCurrentTime)}
-            </span>
           </div>
 
           <div className="flex items-center gap-2">
             {/* Quality selector */}
-            {availableQualities.length > 0 && (
+            {(availableQualities.length > 0 || dashQualities.length > 0) && (
               <div className="relative quality-menu">
                 <button
                   onClick={(e) => { e.stopPropagation(); setShowQualityMenu(!showQualityMenu); }}
@@ -785,18 +905,18 @@ function VideoPlayer({ src, poster, onReady, onError }: VideoPlayerProps) {
                     >
                       Auto
                     </button>
-                    {availableQualities.map((q) => (
+                    {(isDASH ? dashQualities : availableQualities).map((q, i) => (
                       <button
-                        key={q.index}
-                        onClick={() => handleQualityChange(q.index)}
+                        key={i}
+                        onClick={() => handleQualityChange(i)}
                         className={cn(
                           "w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-colors",
-                          currentQuality === q.index
+                          currentQuality === i
                             ? "bg-primary/30 text-primary"
                             : "text-white/70 hover:text-white hover:bg-white/5"
                         )}
                       >
-                        {q.name}
+                        {'name' in q ? q.name : q.label}
                       </button>
                     ))}
                   </div>
