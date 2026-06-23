@@ -16,6 +16,11 @@ export interface Channel {
   logo?: string; // Optional, used for display in the app
   countryName?: string; // Optional, full country name mapping
   languageNames?: string[]; // Optional, full language names mapping
+  matchInfo?: {
+    nowPlaying?: string;
+    matches?: string[];
+    upcoming?: string[];
+  };
 }
 
 // Feed interface based on https://iptv-org.github.io/api/feeds.json

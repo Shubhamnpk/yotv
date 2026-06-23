@@ -85,6 +85,12 @@ function VideoPlayer({ src, poster, onReady, onError, drmConfig }: VideoPlayerPr
   const [dashQualities, setDashQualities] = useState<{ label: string; bitrate: number }[]>([]);
   const wasPlayingRef = useRef(playing);
 
+  const handleAutoplayError = useCallback((err: unknown) => {
+    if (err && typeof err === 'object' && 'name' in err && (err as { name: string }).name === 'NotAllowedError') {
+      setPlaying(false);
+    }
+  }, []);
+
   const seekTo = useCallback((seconds: number) => {
     if (isYouTube && playerRef.current) {
       playerRef.current.seekTo(seconds);
@@ -339,7 +345,7 @@ function VideoPlayer({ src, poster, onReady, onError, drmConfig }: VideoPlayerPr
       });
       startProgressTracking();
       if (playingRef.current && video.readyState >= 1) {
-        video.play().catch(() => {});
+        video.play().catch(handleAutoplayError);
       }
     } else if (Hls.isSupported()) {
       hls = new Hls({
@@ -408,9 +414,7 @@ function VideoPlayer({ src, poster, onReady, onError, drmConfig }: VideoPlayerPr
         startProgressTracking();
 
         if (playingRef.current) {
-          video.play().catch((err) => {
-            console.warn('HLS autoplay prevented:', err);
-          });
+          video.play().catch(handleAutoplayError);
         }
       });
 
@@ -553,8 +557,8 @@ function VideoPlayer({ src, poster, onReady, onError, drmConfig }: VideoPlayerPr
         if (tracks.length > 0) {
           const seen = new Set<number>();
           const uniqueTracks = tracks
-            .filter((t) => {
-              if (seen.has(t.height)) return false;
+            .filter((t): t is typeof t & { height: number } => {
+              if (t.height === null || seen.has(t.height)) return false;
               seen.add(t.height);
               return true;
             })
@@ -576,7 +580,7 @@ function VideoPlayer({ src, poster, onReady, onError, drmConfig }: VideoPlayerPr
         startProgressTracking();
 
         if (playingRef.current) {
-          video.play().catch(() => {});
+          video.play().catch(handleAutoplayError);
         }
       } catch (err) {
         if (destroyed) return;
@@ -722,7 +726,9 @@ function VideoPlayer({ src, poster, onReady, onError, drmConfig }: VideoPlayerPr
       setCurrentQuality(levelIndex);
     } else if (shakaRef.current && isDASH) {
       const tracks = shakaRef.current.getVariantTracks();
-      const sorted = [...tracks].sort((a, b) => b.height - a.height);
+      const sorted = [...tracks]
+        .filter((t): t is typeof t & { height: number } => t.height !== null)
+        .sort((a, b) => b.height - a.height);
       const seen = new Set<number>();
       const unique = sorted.filter((t) => {
         if (seen.has(t.height)) return false;

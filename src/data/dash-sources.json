@@ -13,6 +13,7 @@
           "title": "english World Cup TV",
           "url": "https://qp-pldt-live-bpk-ucd-prod.akamaized.net/bpk-tv/ch299/default/index.mpd",
           "quality": "HD",
+          "disabled": true,
           "drm": {
             "clearKeys": {
               "549ab7cd35a64bb6bb479ecead04d69d": "829799ed534d11fcadeb4b192467e050"
@@ -33,13 +34,55 @@
           "title": "Sport TV",
           "url": "https://a151aivottlinear-a.akamaihd.net/OTTB/sin-nitro/live/dash/enc/m7duvnk2bu/out/v1/d1ad69118b5647309b1eb7213affdb3d/cenc.mpd",
           "quality": "HD",
+          "disabled": true,
           "drm": {
             "clearKeys": {
               "4bbcff3289d457b4dd5dbdd21221de9a": "c4906b9a9f8dda3c0725bddb8c497733"
             }
           }
+        },
+        {
+          "title": "Feed (mob1)",
+          "url": "https://pul-tenm.nbs3g.com/live/hd-en-1-4460933.m3u8?txSecret=8f92350cf5cc0bc5fafa15d0d0a83d75&txTime=6A3C0A40",
+          "quality": "HD"
+        },
+        {
+          "title": "TRT (mob2)",
+          "url": "https://rxne77juptdeyke3tytvgqwyh.medya.trt.com.tr/master.m3u8",
+          "quality": "HD"
+        },
+        {
+          "title": "Feed (ios2)",
+          "url": "https://live05.apusport.com/live/87547578.m3u8",
+          "quality": "HD"
+        },
+        {
+          "title": "Feed (mob3)",
+          "url": "https://live.666666.zip/stream/16697898.m3u8",
+          "quality": "HD"
         }
-      ]
+      ],
+      "matchInfo": {
+        "nowPlaying": "Today — Wed Jun 24 (Group Stage)",
+        "matches": [
+          "3pm ET — Switzerland vs Canada (Group B)",
+          "3pm ET — Bosnia & Herzegovina vs Qatar (Group B)",
+          "6pm ET — Scotland vs Brazil (Group C)",
+          "6pm ET — Morocco vs Haiti (Group C)",
+          "9pm ET — Czechia vs Mexico (Group A)",
+          "9pm ET — South Africa vs South Korea (Group A)"
+        ],
+        "upcoming": [
+          "Thu Jun 25 — Ecuador vs Germany, Japan vs Sweden, USA vs Türkiye & more",
+          "Fri Jun 26 — Norway vs France, Uruguay vs Spain, Egypt vs Iran & more",
+          "Sat Jun 27 — England vs Panama, Colombia vs Portugal, Argentina vs Jordan & more",
+          "Jun 28–Jul 3 — Round of 32",
+          "Jul 4–7 — Round of 16",
+          "Jul 9–11 — Quarterfinals",
+          "Jul 14–15 — Semifinals",
+          "Sun Jul 19 — Final @ NY/NJ"
+        ]
+      }
     }
   ]
 }

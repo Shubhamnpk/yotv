@@ -211,26 +211,30 @@ export function DataProvider({ children }: { children: ReactNode }) {
             languageNames: [source.lang],
             categories: source.categories,
             logo: source.img,
+            matchInfo: source.matchInfo,
           };
         });
 
-        const dashStreams: Stream[] = dashSourcesData.sources.flatMap((source) => {
-          const streams = source.streams || [{
-            url: source.url,
+        const dashStreams: Stream[] = dashSourcesData.sources.flatMap((source: Record<string, unknown>) => {
+          const src = source as { streams?: Array<Record<string, unknown>>; url?: string; drm?: { clearKeys?: Record<string, string> }; name: string; id: string };
+          const streams = src.streams || [{
+            url: src.url,
             quality: null,
-            drm: source.drm,
-            title: source.name,
+            drm: src.drm,
+            title: src.name,
           }];
-          return streams.map((s: { title: string; url: string; quality: string | null; drm?: { clearKeys?: Record<string, string> } }) => ({
-            channel: source.id,
-            feed: null,
-            title: s.title,
-            url: s.url,
-            referrer: null,
-            user_agent: null,
-            quality: s.quality || null,
-            drm: s.drm,
-          }));
+          return streams
+            .filter((s) => !(s as { disabled?: boolean }).disabled)
+            .map((s) => ({
+              channel: src.id,
+              feed: null,
+              title: s.title as string,
+              url: s.url as string,
+              referrer: null,
+              user_agent: null,
+              quality: (s.quality as string | null) || null,
+              drm: s.drm as { clearKeys?: Record<string, string> } | undefined,
+            }));
         });
 
         setChannels([...apiChannels, ...youtubeChannels, ...dashChannels]);

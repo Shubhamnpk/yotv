@@ -332,6 +332,31 @@ export function PlayerSection({ channel, stream, streams, onBack }: PlayerSectio
         )}
       </div>
 
+      {/* Match info for FIFA / event channels */}
+      {channel.matchInfo && (
+        <div className="rounded-xl border border-primary/15 bg-primary/5 px-4 py-3 space-y-2">
+          <div className="flex items-center gap-2 text-sm font-bold text-foreground">
+            <span className="inline-flex h-2 w-2 rounded-full bg-green-500 shadow-[0_0_6px_1px] shadow-green-500/60" />
+            {channel.matchInfo.nowPlaying || 'Live'}
+          </div>
+          {channel.matchInfo.matches && channel.matchInfo.matches.length > 0 && (
+            <div className="space-y-1">
+              {channel.matchInfo.matches.map((m, i) => (
+                <p key={i} className="text-xs text-muted-foreground pl-3 border-l-2 border-primary/30">{m}</p>
+              ))}
+            </div>
+          )}
+          {channel.matchInfo.upcoming && channel.matchInfo.upcoming.length > 0 && (
+            <div className="space-y-1 pt-1 border-t border-border/20">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Upcoming</p>
+              {channel.matchInfo.upcoming.map((m, i) => (
+                <p key={i} className="text-xs text-muted-foreground pl-3 border-l-2 border-border/40">{m}</p>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Compact metadata chips */}
       <div className="flex flex-wrap items-center gap-1.5">
         <span className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary border border-primary/20">
