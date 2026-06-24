@@ -182,7 +182,6 @@ export function PlayerSection({ channel, stream, streams, onBack }: PlayerSectio
               <VideoPlayer
                 key={`${activeStream.url}-${activeStreamIndex}-${retryCount}`}
                 src={activeStream.url}
-                poster={channel.logo}
                 onReady={handlePlayerReady}
                 onError={handlePlayerError}
                 drmConfig={activeStream.drm}

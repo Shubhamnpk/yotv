@@ -17,6 +17,7 @@ import {
   Settings2,
   SkipForward,
   SkipBack,
+  ArrowRightToLine,
 } from 'lucide-react';
 import { isYouTubeUrl, isDashUrl } from '../utils/streamUtils';
 import useStore from '../store/useStore';
@@ -24,12 +25,9 @@ import { cn } from '../utils/cn';
 
 interface VideoPlayerProps {
   src: string;
-  poster?: string;
   onReady?: () => void;
   onError?: (message: string) => void;
-  drmConfig?: {
-    clearKeys?: Record<string, string>;
-  };
+  drmConfig?: { clearKeys?: Record<string, string> };
 }
 
 const qualityHeightMap = {
@@ -53,7 +51,7 @@ function formatTime(seconds: number): string {
   return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
-function VideoPlayer({ src, poster, onReady, onError, drmConfig }: VideoPlayerProps) {
+function VideoPlayer({ src, onReady, onError, drmConfig }: VideoPlayerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const playerRef = useRef<ReactPlayer>(null);
@@ -106,6 +104,11 @@ function VideoPlayer({ src, poster, onReady, onError, drmConfig }: VideoPlayerPr
     if (seekableEnd > seekableStart) return seekableEnd;
     return videoRef.current?.duration || Infinity;
   }, [isYouTube, duration, seekableEnd, seekableStart]);
+
+  const jumpToLive = useCallback(() => {
+    const maxT = getMaxTime();
+    if (isFinite(maxT)) seekTo(maxT);
+  }, [getMaxTime, seekTo]);
 
   const handleYouTubeProgress = useCallback((state: { playedSeconds: number; loadedSeconds: number }) => {
     youTubeProgressRef.current = { playedSeconds: state.playedSeconds, timestamp: Date.now() };
@@ -770,6 +773,7 @@ function VideoPlayer({ src, poster, onReady, onError, drmConfig }: VideoPlayerPr
   };
 
   const hasLiveSeekable = seekableEnd > seekableStart;
+  const isBehindLive = hasLiveSeekable && currentTime < seekableEnd - 10;
   const effectiveDuration = hasLiveSeekable ? seekableEnd - seekableStart : (isFinite(duration) && duration > 0 ? duration : 0);
   const effectiveCurrentTime = hasLiveSeekable ? currentTime - seekableStart : currentTime;
   const progressPercent = effectiveDuration > 0 ? (effectiveCurrentTime / effectiveDuration) * 100 : 0;
@@ -842,7 +846,6 @@ function VideoPlayer({ src, poster, onReady, onError, drmConfig }: VideoPlayerPr
           <video
             ref={videoRef}
             className="h-full w-full bg-black object-contain"
-            poster={poster}
             playsInline
             autoPlay={playing}
             muted={muted}
@@ -879,6 +882,16 @@ function VideoPlayer({ src, poster, onReady, onError, drmConfig }: VideoPlayerPr
               <Radio className="h-3 w-3 animate-pulse" />
               LIVE
             </span>
+            {isBehindLive && (
+              <button
+                onClick={(e) => { e.stopPropagation(); jumpToLive(); }}
+                className="flex items-center gap-1 rounded-lg bg-white/20 hover:bg-white/30 px-2.5 py-1 text-xs font-bold text-white transition-colors shadow-lg backdrop-blur-sm"
+                title="Go to live"
+              >
+                <ArrowRightToLine className="h-3 w-3" />
+                Go Live
+              </button>
+            )}
           </div>
 
           <div className="flex items-center gap-2">
