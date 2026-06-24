@@ -65,6 +65,21 @@
           "title": "Feed (mob3)",
           "url": "https://hls-proxy-production.bhagwotilama.workers.dev/?url=https://live.666666.zip/stream/16697898.m3u8",
           "quality": "HD"
+        },
+        {
+          "title": "Feed (pul-tenm)",
+          "url": "https://hls-proxy-production.bhagwotilama.workers.dev/?url=https://pul-tenm.nbs3g.com/live/hd-en-1-4460943.m3u8?txSecret=5cf866aef0a3ba5441f64bbab8026331&txTime=6A3D7858",
+          "quality": "HD"
+        },
+        {
+          "title": "Feed (mob2 alt)",
+          "url": "https://hls-proxy-production.bhagwotilama.workers.dev/?url=https://live.666666.zip/stream/28361755.m3u8",
+          "quality": "HD"
+        },
+        {
+          "title": "Feed (ios1)",
+          "url": "https://hls-proxy-production.bhagwotilama.workers.dev/?url=https://live05.apusport.com/live/78905744.m3u8",
+          "quality": "HD"
         }
       ],
       "matchInfo": {
