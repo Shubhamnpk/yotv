@@ -57,7 +57,9 @@
         {
           "title": "Feed (ios2)",
           "url": "https://hls-proxy-production.bhagwotilama.workers.dev/?url=https://live05.apusport.com/live/87547578.m3u8",
-          "quality": "HD"
+          "quality": "HD",
+          "disabled": true
+
         },
         {
           "title": "Feed (mob3)",
