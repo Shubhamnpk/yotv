@@ -17,8 +17,7 @@ export interface Channel {
   countryName?: string; // Optional, full country name mapping
   languageNames?: string[]; // Optional, full language names mapping
   matchInfo?: {
-    nowPlaying?: string;
-    matches?: string[];
+    days?: { label: string; matches: { kickoff: string; label: string }[] }[];
     upcoming?: string[];
   };
 }

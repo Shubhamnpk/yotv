@@ -337,18 +337,35 @@ export function PlayerSection({ channel, stream, streams, onBack }: PlayerSectio
         <div className="rounded-xl border border-primary/15 bg-primary/5 px-4 py-3 space-y-2">
           <div className="flex items-center gap-2 text-sm font-bold text-foreground">
             <span className="inline-flex h-2 w-2 rounded-full bg-green-500 shadow-[0_0_6px_1px] shadow-green-500/60" />
-            {channel.matchInfo.nowPlaying || 'Live'}
+            FIFA World Cup 2026
           </div>
-          {channel.matchInfo.matches && channel.matchInfo.matches.length > 0 && (
-            <div className="space-y-1">
-              {channel.matchInfo.matches.map((m, i) => (
-                <p key={i} className="text-xs text-muted-foreground pl-3 border-l-2 border-primary/30">{m}</p>
-              ))}
+          {channel.matchInfo.days?.slice(0, 2).map((day) => (
+            <div key={day.label} className="space-y-1">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{day.label}</p>
+              {day.matches.map((m, i) => {
+                const dt = new Date(m.kickoff);
+                const now = Date.now();
+                const matchStart = dt.getTime();
+                const matchEnd = matchStart + 7200000;
+                const isLive = now >= matchStart && now < matchEnd;
+                const isPast = now >= matchEnd;
+                const time = dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                return (
+                  <p key={i} className={`text-xs pl-3 border-l-2 flex items-center gap-1.5 ${
+                    isLive ? 'text-green-400 border-green-500 font-semibold' :
+                    isPast ? 'text-muted-foreground/50 border-border/20' :
+                    'text-muted-foreground border-primary/30'
+                  }`}>
+                    {isLive && <span className="inline-flex h-1.5 w-1.5 rounded-full bg-green-500 shadow-[0_0_6px_1px] shadow-green-500/60 animate-pulse" />}
+                    {time} — {m.label}
+                  </p>
+                );
+              })}
             </div>
-          )}
+          ))}
           {channel.matchInfo.upcoming && channel.matchInfo.upcoming.length > 0 && (
             <div className="space-y-1 pt-1 border-t border-border/20">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Upcoming</p>
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Upcoming Rounds</p>
               {channel.matchInfo.upcoming.map((m, i) => (
                 <p key={i} className="text-xs text-muted-foreground pl-3 border-l-2 border-border/40">{m}</p>
               ))}

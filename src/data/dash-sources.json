@@ -24,6 +24,7 @@
           "title": "M6 France HD",
           "url": "https://origin-m6web.live.6cloud.fr/out/v1/6play/6play-m6/cmaf_cenc00/dash-short-hd.mpd",
           "quality": "HD",
+          "disabled": true,
           "drm": {
             "clearKeys": {
               "433ffba670963e70857859a9dff4be04": "51ede3a821229fe81e71282c8eff80e3"
@@ -42,44 +43,81 @@
           }
         },
         {
-          "title": "Feed (mob1)",
-          "url": "https://pul-tenm.nbs3g.com/live/hd-en-1-4460933.m3u8?txSecret=8f92350cf5cc0bc5fafa15d0d0a83d75&txTime=6A3C0A40",
-          "quality": "HD"
+          "title": "TRT (mob1)",
+          "url": "https://hls-proxy-production.bhagwotilama.workers.dev/?url=https://rxne77juptdeyke3tytvgqwyh.medya.trt.com.tr/master.m3u8",
+          "quality": "HD",
+          "disabled": true
         },
         {
-          "title": "TRT (mob2)",
-          "url": "https://rxne77juptdeyke3tytvgqwyh.medya.trt.com.tr/master.m3u8",
-          "quality": "HD"
+          "title": "Feed (mob2)",
+          "url": "https://hls-proxy-production.bhagwotilama.workers.dev/?url=https://pul-tenm.nbs3g.com/live/hd-en-1-4460933.m3u8?txSecret=8f92350cf5cc0bc5fafa15d0d0a83d75&txTime=6A3C0A40",
+          "quality": "HD",
+          "disabled": true
         },
         {
           "title": "Feed (ios2)",
-          "url": "https://live05.apusport.com/live/87547578.m3u8",
+          "url": "https://hls-proxy-production.bhagwotilama.workers.dev/?url=https://live05.apusport.com/live/87547578.m3u8",
           "quality": "HD"
         },
         {
           "title": "Feed (mob3)",
-          "url": "https://live.666666.zip/stream/16697898.m3u8",
+          "url": "https://hls-proxy-production.bhagwotilama.workers.dev/?url=https://live.666666.zip/stream/16697898.m3u8",
           "quality": "HD"
         }
       ],
       "matchInfo": {
-        "nowPlaying": "Today — Wed Jun 24 (Group Stage)",
-        "matches": [
-          "3pm ET — Switzerland vs Canada (Group B)",
-          "3pm ET — Bosnia & Herzegovina vs Qatar (Group B)",
-          "6pm ET — Scotland vs Brazil (Group C)",
-          "6pm ET — Morocco vs Haiti (Group C)",
-          "9pm ET — Czechia vs Mexico (Group A)",
-          "9pm ET — South Africa vs South Korea (Group A)"
+        "days": [
+          {
+            "label": "Today — Wed Jun 24",
+            "matches": [
+              { "kickoff": "2026-06-24T19:00:00Z", "label": "Switzerland vs Canada (Group B)" },
+              { "kickoff": "2026-06-24T19:00:00Z", "label": "Bosnia & Herzegovina vs Qatar (Group B)" },
+              { "kickoff": "2026-06-24T22:00:00Z", "label": "Morocco vs Haiti (Group C)" },
+              { "kickoff": "2026-06-24T22:00:00Z", "label": "Scotland vs Brazil (Group C)" },
+              { "kickoff": "2026-06-25T01:00:00Z", "label": "Czechia vs Mexico (Group A)" },
+              { "kickoff": "2026-06-25T01:00:00Z", "label": "South Africa vs South Korea (Group A)" }
+            ]
+          },
+          {
+            "label": "Tomorrow — Thu Jun 25",
+            "matches": [
+              { "kickoff": "2026-06-25T20:00:00Z", "label": "Ecuador vs Germany (Group E)" },
+              { "kickoff": "2026-06-25T20:00:00Z", "label": "Curacao vs Ivory Coast (Group E)" },
+              { "kickoff": "2026-06-25T23:00:00Z", "label": "Tunisia vs Netherlands (Group F)" },
+              { "kickoff": "2026-06-25T23:00:00Z", "label": "Japan vs Sweden (Group F)" },
+              { "kickoff": "2026-06-26T02:00:00Z", "label": "Türkiye vs USA (Group D)" },
+              { "kickoff": "2026-06-26T02:00:00Z", "label": "Paraguay vs Australia (Group D)" }
+            ]
+          },
+          {
+            "label": "Fri Jun 26",
+            "matches": [
+              { "kickoff": "2026-06-26T19:00:00Z", "label": "Norway vs France (Group I)" },
+              { "kickoff": "2026-06-26T19:00:00Z", "label": "Senegal vs Iraq (Group I)" },
+              { "kickoff": "2026-06-27T00:00:00Z", "label": "Cape Verde vs Saudi Arabia (Group H)" },
+              { "kickoff": "2026-06-27T00:00:00Z", "label": "Uruguay vs Spain (Group H)" },
+              { "kickoff": "2026-06-27T03:00:00Z", "label": "New Zealand vs Belgium (Group G)" },
+              { "kickoff": "2026-06-27T03:00:00Z", "label": "Egypt vs Iran (Group G)" }
+            ]
+          },
+          {
+            "label": "Sat Jun 27",
+            "matches": [
+              { "kickoff": "2026-06-27T21:00:00Z", "label": "Panama vs England (Group L)" },
+              { "kickoff": "2026-06-27T21:00:00Z", "label": "Croatia vs Ghana (Group L)" },
+              { "kickoff": "2026-06-27T23:30:00Z", "label": "DR Congo vs Uzbekistan (Group K)" },
+              { "kickoff": "2026-06-27T23:30:00Z", "label": "Colombia vs Portugal (Group K)" },
+              { "kickoff": "2026-06-28T02:00:00Z", "label": "Algeria vs Austria (Group J)" },
+              { "kickoff": "2026-06-28T02:00:00Z", "label": "Jordan vs Argentina (Group J)" }
+            ]
+          }
         ],
         "upcoming": [
-          "Thu Jun 25 — Ecuador vs Germany, Japan vs Sweden, USA vs Türkiye & more",
-          "Fri Jun 26 — Norway vs France, Uruguay vs Spain, Egypt vs Iran & more",
-          "Sat Jun 27 — England vs Panama, Colombia vs Portugal, Argentina vs Jordan & more",
           "Jun 28–Jul 3 — Round of 32",
           "Jul 4–7 — Round of 16",
           "Jul 9–11 — Quarterfinals",
           "Jul 14–15 — Semifinals",
+          "Sat Jul 18 — Bronze Final",
           "Sun Jul 19 — Final @ NY/NJ"
         ]
       }
