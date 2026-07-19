@@ -537,6 +537,12 @@ function VideoPlayer({ src, onReady, onError, drmConfig }: VideoPlayerProps) {
           });
         }
 
+        // Set referer header so CDNs don't block manifest/segment requests
+        player.getNetworkingEngine().registerRequestFilter((type, request) => {
+          request.headers['Referer'] = 'https://www.cricbuzz.com/';
+          request.headers['User-Agent'] = 'Mozilla/5.0 (Linux; Android 10; SM-G973F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36';
+        });
+
         player.configure({
           streaming: {
             bufferingGoal: 15,
