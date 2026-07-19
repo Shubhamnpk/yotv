@@ -62,24 +62,38 @@
 
         },
         {
-          "title": "Feed (mob3)",
-          "url": "https://hls-proxy-production.bhagwotilama.workers.dev/?url=https://live.666666.zip/stream/16697898.m3u8",
-          "quality": "HD"
-        },
-        {
           "title": "Feed (pul-tenm)",
           "url": "https://hls-proxy-production.bhagwotilama.workers.dev/?url=https://pul-tenm.nbs3g.com/live/hd-en-1-4460943.m3u8?txSecret=5cf866aef0a3ba5441f64bbab8026331&txTime=6A3D7858",
-          "quality": "HD"
+          "quality": "HD",
+          "disabled": true
         },
         {
           "title": "Feed (mob2 alt)",
           "url": "https://hls-proxy-production.bhagwotilama.workers.dev/?url=https://live.666666.zip/stream/28361755.m3u8",
-          "quality": "HD"
+          "quality": "HD",
+          "disabled": true
         },
         {
           "title": "Feed (ios1)",
           "url": "https://hls-proxy-production.bhagwotilama.workers.dev/?url=https://live05.apusport.com/live/78905744.m3u8",
-          "quality": "HD"
+          "quality": "HD",
+          "disabled": true
+        },
+        {
+          "title": "Feed (mob3)",
+          "url": "https://hls-proxy-production.bhagwotilama.workers.dev/?url=https://live.666666.zip/stream/16697898.m3u8",
+          "quality": "HD",
+          "disabled": true
+        },
+        {
+          "title": "TSN1 DASH",
+          "url": "https://otte.cache.aiv-cdn.net/bom-nitro/live/clients/dash/enc/w0rehjjrwe/out/v1/69a2a7041395406b970598f61680e7cf/cenc.mpd",
+          "quality": "HD",
+          "drm": {
+            "clearKeys": {
+              "14eeabf30c14b7fbf3008c03099ce011": "17d2ac8dbc5429bd70af3433aa12158d"
+            }
+          }
         }
       ],
       "matchInfo": {
