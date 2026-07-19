@@ -94,6 +94,11 @@
               "14eeabf30c14b7fbf3008c03099ce011": "17d2ac8dbc5429bd70af3433aa12158d"
             }
           }
+        },
+        {
+          "title": "Fox USA2",
+          "url": "https://hls-proxy-production.bhagwotilama.workers.dev/?url=https://fiveo4.vilevodules.uk/main/secure/96bf7aeb209240a9c5166f7effdaaa4e2ef9280bbc8a0397d02eabe83645f45e/1784492177/fox-usa2.m3u8",
+          "quality": "HD"
         }
       ],
       "matchInfo": {
