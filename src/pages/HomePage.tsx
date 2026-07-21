@@ -88,26 +88,6 @@ export function HomePage() {
         />
 
         <main className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-5 py-4">
-          {/* FIFA 2026 Banner */}
-          <button
-            onClick={() => navigate('/watch/dash-fifa')}
-            className="w-full mb-6 group relative overflow-hidden rounded-2xl border border-border/50 bg-gradient-to-r from-indigo-900 via-blue-800 to-sky-700 shadow-xl transition-all duration-300 hover:shadow-2xl hover:scale-[1.01] cursor-pointer text-left"
-          >
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(255,255,255,0.1),transparent_60%)] pointer-events-none" />
-            <div className="relative flex items-center gap-4 sm:gap-6 p-4 sm:p-6">
-              <div className="flex h-14 w-14 sm:h-20 sm:w-20 flex-shrink-0 items-center justify-center rounded-2xl bg-white/15 backdrop-blur-sm border border-white/20 shadow-inner">
-                <Trophy className="h-7 w-7 sm:h-10 sm:w-10 text-yellow-400" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-bold uppercase tracking-widest text-yellow-400/90">Live Now</p>
-                <h3 className="text-lg sm:text-2xl font-extrabold text-white mt-0.5">FIFA 2026</h3>
-                <p className="text-xs sm:text-sm text-white/70 mt-1">Watch live football matches in HD</p>
-              </div>
-              <div className="flex h-10 w-10 sm:h-12 sm:w-12 flex-shrink-0 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm border border-white/30 group-hover:bg-white/30 transition-all duration-300">
-                <Play className="h-5 w-5 sm:h-6 sm:w-6 text-white ml-0.5" />
-              </div>
-            </div>
-          </button>
 
           <ChannelSection
             channels={displayChannels}
